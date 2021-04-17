@@ -1,0 +1,56 @@
+{
+	"elements": [
+		{
+			"name": "red",
+			"image_path": "red.png",
+			"code": "r"
+		},
+		{
+			"name": "green",
+			"image_path": "green.png",
+			"code": "g"
+		},
+		{
+			"name": "blue",
+			"image_path": "blue.png",
+			"code": "b"
+		},
+		{
+			"name": "violet",
+			"image_path": "violet.png",
+			"code": "v"
+		},
+		{
+			"name": "orange",
+			"image_path": "orange.png",
+			"code": "o"
+		},
+		{
+			"name": "bomb",
+			"image_path": "bomb.png",
+			"code": "b"
+		},
+		{
+			"name": "vbomb",
+			"image_path": "v_bomb.png",
+			"code": "vb"
+		},
+		{
+			"name": "hbomb",
+			"image_path": "h_bomb.png",
+			"code": "hb"
+		}
+	],
+	"tiles": [
+		{
+			"name": "tile1",
+			"image_path": "tile_1.png",
+			"code": "t1"
+		},
+		{
+			"name": "tile2",
+			"image_path": "tile_2.png",
+			"code": "t2"
+		}
+	]
+}

@@ -11,7 +11,7 @@ find_package(SFML 2 COMPONENTS graphics window system)
 include_directories(${SFML_INCLUDE_DIR})
 
 if(${SFML_FOUND}) 
-    file(GLOB srcs src/*.h src/*.cpp src/*.hpp)
+    file(GLOB_RECURSE srcs src/*.h src/*.cpp src/*.hpp)
     add_executable(${TARGET_NAME} ${srcs})
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_NAME})
 

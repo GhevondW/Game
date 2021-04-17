@@ -4,6 +4,8 @@
 
 #include <SFML/Graphics.hpp>
 #include <stdio.h>
+#include "Models/Element.h"
+#include "DataProviders/ConfigDataProvider.h"
 
 #endif /* GameController_hpp */
 
@@ -21,15 +23,15 @@ class GameController {
 public :
     GameController();
 
-    void startGame();
+    void StartGame();
+    void UpdateGameStatus(GameStatus &status);
 
-    void updateGameStatus(GameStatus &status);
+private:
+    void _run();
 
 private:
     GameStatus _gameStatus = NotStarted;
     RenderWindow *_app;
-
-    void run();
-
-
+    std::unique_ptr<game::ElementFactory>           _factory{nullptr};
+    std::unique_ptr<game::JSONConfigDataProvider>   _config_dp{nullptr};
 };

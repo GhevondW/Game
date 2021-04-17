@@ -10,25 +10,24 @@ namespace game{
 	}
 
 
-	Config JSONConfigDataProvider::ReadConfig(const std::string& path)
+	const Config& JSONConfigDataProvider::Load(const std::string& path)
 	{
 		using namespace nlohmann;
-		Config conf;
 		std::ifstream file{ path };
 		if (file.is_open()) {
 			json j = json::parse(file);
-
-			j.at("row").get_to(conf.row);
-			j.at("column").get_to(conf.column);
-			j.at("moves_count").get_to(conf.moves_count);
-			j.at("fig_colors_count").get_to(conf.fig_colors_count);
-			j.at("board").get_to(conf.board);
+			_config = Config{};
+			j.at("row").get_to(_config.row);
+			j.at("column").get_to(_config.column);
+			j.at("moves_count").get_to(_config.moves_count);
+			j.at("fig_colors_count").get_to(_config.fig_colors_count);
+			j.at("board").get_to(_config.board);
 
 			const json& sj = j.at("objectives");
-			conf.objectives.resize(sj.size());
-			std::copy(sj.begin(), sj.end(), conf.objectives.begin());
+			_config.objectives.resize(sj.size());
+			std::copy(sj.begin(), sj.end(), _config.objectives.begin());
 		}
 		file.close();
-		return conf;
+		return _config;
 	}
 }

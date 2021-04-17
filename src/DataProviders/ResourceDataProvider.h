@@ -7,13 +7,20 @@ namespace game
 {
 	struct IResourceDataProvider
 	{
+		IResourceDataProvider() = default;
 		virtual ~IResourceDataProvider() = default;
-		virtual Resource ReadResource(const std::string& path) = 0;
+		virtual const Resource& Load(const std::string& path) = 0;
+
+		const std::vector<ElementInfo>& GetElements() const { return _resource.elements; }
+		const std::vector<TileInfo>& GetTiles() const { return _resource.tiles; }
+
+	protected:
+		Resource _resource{};
 	};
 
 	struct JSONResourceDataProvider : public IResourceDataProvider
 	{
-		Resource ReadResource(const std::string& path) override;
+		const Resource& Load(const std::string& path) override;
 	};
 
 	//struct XMLConfigDataProvider : public IResourceDataProvider

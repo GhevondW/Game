@@ -1,0 +1,21 @@
+{
+  "row": 7,
+  "column": 6,
+  "moves_count": 15,
+  "fig_colors_count": 5,
+  "objectives": [
+    {
+      "color": "violet",
+      "count": 3
+    },
+    {
+      "color": "blue",
+      "count": 5
+    },
+    {
+      "color": "red",
+      "count": 10
+    }
+  ],
+  "board": "rogbvovgovbgrvbboggbvbbororrbrvbgbvogbovog"
+}

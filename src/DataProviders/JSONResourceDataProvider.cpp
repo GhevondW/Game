@@ -3,21 +3,14 @@
 #include <fstream>
 
 namespace game {
-	static void from_json(const nlohmann::json& j, Color& sb)
+	static void from_json(const nlohmann::json& j, ElementInfo& sb)
 	{
 		sb.name = j.at("name");
 		sb.image_path = j.at("image_path");
 		sb.code = j.at("code");
 	}
 
-	static void from_json(const nlohmann::json& j, Bomb& sb)
-	{
-		sb.name = j.at("name");
-		sb.image_path = j.at("image_path");
-		sb.code = j.at("code");
-	}
-
-	static void from_json(const nlohmann::json& j, Tile& sb)
+	static void from_json(const nlohmann::json& j, TileInfo& sb)
 	{
 		sb.name = j.at("name");
 		sb.image_path = j.at("image_path");
@@ -25,31 +18,27 @@ namespace game {
 	}
 
 
-	Resource JSONResourceDataProvider::ReadResource(const std::string& path)
+	const Resource& JSONResourceDataProvider::Load(const std::string& path)
 	{
 		using namespace nlohmann;
-
-		Resource res;
 
 		std::ifstream file{ path };
 
 		if (file.is_open()) {
 			json j = json::parse(file);
 
-			const json& c = j.at("colors");
-			res.colors.resize(c.size());
-			std::copy(c.begin(), c.end(), res.colors.begin());
-
-			const json& b = j.at("bombs");
-			res.bombs.resize(b.size());
-			std::copy(b.begin(), b.end(), res.bombs.begin());
+			const json& c = j.at("elements");
+			_resource.elements.clear();
+			_resource.elements.resize(c.size());
+			std::copy(c.begin(), c.end(), _resource.elements.begin());
 
 			const json& t = j.at("tiles");
-			res.tiles.resize(t.size());
-			std::copy(t.begin(), t.end(), res.tiles.begin());
+			_resource.tiles.clear();
+			_resource.tiles.resize(t.size());
+			std::copy(t.begin(), t.end(), _resource.tiles.begin());
 		}
 
 		file.close();
-		return res;
+		return _resource;
 	}
 }

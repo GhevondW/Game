@@ -6,21 +6,14 @@
 
 namespace game
 {
-	struct Color
+	struct ElementInfo
 	{
 		std::string name{};
 		std::string image_path{};
 		std::string code{};
 	};
 
-	struct Bomb
-	{
-		std::string name{};
-		std::string image_path{};
-		std::string code{};
-	};
-
-	struct Tile
+	struct TileInfo
 	{
 		std::string name{};
 		std::string image_path{};
@@ -29,9 +22,8 @@ namespace game
 
 	struct Resource
 	{
-		std::vector<Color>	colors{};
-		std::vector<Bomb>	bombs{};
-		std::vector<Tile>	tiles{};
+		std::vector<ElementInfo>	elements{};
+		std::vector<TileInfo>		tiles{};
 	};
 
 }
