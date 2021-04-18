@@ -133,18 +133,26 @@ namespace game
 		{
 			if (_resource_dp == nullptr) return nullptr;
 
-			const auto& ref = _resource_dp->GetElements();
-			const ElementInfo& info = ref[(int)type];
+			std::string code = "empty";
 
 			if (_elem_texture_cache.count(type) == 0) {
 				_elem_texture_cache.insert({ type, sf::Texture{} });
+			}
+
+			if (type != Element::TYPE::EMPTY) {
+				const auto& ref = _resource_dp->GetElements();
+				const ElementInfo& info = ref[(int)type];
+				code = info.code;
+				//if (_elem_texture_cache.count(type) == 0) {
+				//	_elem_texture_cache.insert({ type, sf::Texture{} });
 				std::string path = R_PATH;
 				path += info.image_path;
 
 				_elem_texture_cache[type].loadFromFile(path);
+				//}
 			}
 
-			return new Element(type, info.code, _elem_texture_cache.at(type));
+			return new Element(type, code, _elem_texture_cache.at(type));
 		}
 
 		Tile* CreateTile(Tile::TYPE type)
