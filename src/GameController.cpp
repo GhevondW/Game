@@ -6,8 +6,9 @@ using namespace sf;
 using namespace game;
 
 GameController::GameController() {
-    _factory = std::make_unique<ElementFactory>(std::make_unique<JSONResourceDataProvider>());
-    _config_dp = std::make_unique<JSONConfigDataProvider>();
+    _config_dp = std::make_shared<JSONConfigDataProvider>();
+    _resource_dp = std::make_shared<JSONResourceDataProvider>();
+    _board = std::make_unique<Board>(_config_dp, _resource_dp);
 }
 
 void GameController::UpdateGameStatus(GameStatus &status) {
@@ -15,12 +16,14 @@ void GameController::UpdateGameStatus(GameStatus &status) {
 }
 
 void GameController::StartGame() {
+    _LoadInitialData();
+    _board->Init();
     _app = new RenderWindow(VideoMode(750, 950), "Game", Style::Close);
     _app->setFramerateLimit(60);
-    _run();
+    _Run();
 }
 
-void GameController::_run() {
+void GameController::_Run() {
     //Texture texture;
     //texture.loadFromFile("C:\\Users\\Ghevond\\Desktop\\Game\\DevTestGame\\resources\\bomb.png");
     //Texture texture_tile;
@@ -43,31 +46,33 @@ void GameController::_run() {
     //sprite.setTextureRect(IntRect{0,0,50,50});
     //sprite2.setTextureRect(IntRect{ 0,0,50,50 });
 
-    std::vector<Element*> elements;
-    elements.push_back(_factory->CreateElement(Element::RED));
-    elements.push_back(_factory->CreateElement(Element::GREEN));
-    elements.push_back(_factory->CreateElement(Element::RED));
-    elements.push_back(_factory->CreateElement(Element::VIOLET));
-    elements.push_back(_factory->CreateElement(Element::VBOMB));
-    elements.push_back(_factory->CreateElement(Element::VIOLET));
-    elements.push_back(_factory->CreateElement(Element::VIOLET));
-    elements.push_back(_factory->CreateElement(Element::RED));
-    elements.push_back(_factory->CreateElement(Element::GREEN));
-    elements.push_back(_factory->CreateElement(Element::RED));
-    elements.push_back(_factory->CreateElement(Element::VIOLET));
-    elements.push_back(_factory->CreateElement(Element::VBOMB));
-    elements.push_back(_factory->CreateElement(Element::VIOLET));
-    elements.push_back(_factory->CreateElement(Element::VIOLET));
+    //std::vector<Element*> elements;
+    //elements.push_back(_factory->CreateElement(Element::RED));
+    //elements.push_back(_factory->CreateElement(Element::GREEN));
+    //elements.push_back(_factory->CreateElement(Element::RED));
+    //elements.push_back(_factory->CreateElement(Element::VIOLET));
+    //elements.push_back(_factory->CreateElement(Element::VBOMB));
+    //elements.push_back(_factory->CreateElement(Element::VIOLET));
+    //elements.push_back(_factory->CreateElement(Element::VIOLET));
+    //elements.push_back(_factory->CreateElement(Element::RED));
+    //elements.push_back(_factory->CreateElement(Element::GREEN));
+    //elements.push_back(_factory->CreateElement(Element::RED));
+    //elements.push_back(_factory->CreateElement(Element::VIOLET));
+    //elements.push_back(_factory->CreateElement(Element::VBOMB));
+    //elements.push_back(_factory->CreateElement(Element::VIOLET));
+    //elements.push_back(_factory->CreateElement(Element::VIOLET));
 
     while (_app->isOpen()) {
-        _app->clear(Color(150, 150, 150, 255));
+        _app->clear(Color(204, 255, 204, 255));
 
-        for (size_t i = 0; i < elements.size(); i++)
-        {
-            elements[i]->SetPosition(i * 70, 200);
-            _app->draw(elements[i]->GetSprite());
-        }
+        //for (size_t i = 0; i < elements.size(); i++)
+        //{
+        //    elements[i]->SetPosition(i * 70, 200);
+        //    _app->draw(elements[i]->GetSprite());
+        //}
         
+        _board->Draw(_app);
+
         sf::Event event;
         while (_app->pollEvent(event)) {
             // "close requested" event: we close the window
@@ -77,10 +82,11 @@ void GameController::_run() {
         _app->display();
     }
 
-    for (size_t i = 0; i < elements.size(); i++)
-    {
-        delete elements[i];
-    }
-    elements.clear();
+}
 
+void GameController::_LoadInitialData()
+{
+    std::string rpath = R_PATH;
+    _config_dp->Load(rpath + "config.json");
+    _resource_dp->Load(rpath + "res.json");
 }

@@ -22,23 +22,26 @@ namespace game {
 	{
 		using namespace nlohmann;
 
+		if (_resource) return *_resource;
+
+		_resource = std::make_unique<Resource>();
 		std::ifstream file{ path };
 
 		if (file.is_open()) {
 			json j = json::parse(file);
 
 			const json& c = j.at("elements");
-			_resource.elements.clear();
-			_resource.elements.resize(c.size());
-			std::copy(c.begin(), c.end(), _resource.elements.begin());
+			_resource->elements.clear();
+			_resource->elements.resize(c.size());
+			std::copy(c.begin(), c.end(), _resource->elements.begin());
 
 			const json& t = j.at("tiles");
-			_resource.tiles.clear();
-			_resource.tiles.resize(t.size());
-			std::copy(t.begin(), t.end(), _resource.tiles.begin());
+			_resource->tiles.clear();
+			_resource->tiles.resize(t.size());
+			std::copy(t.begin(), t.end(), _resource->tiles.begin());
 		}
 
 		file.close();
-		return _resource;
+		return *_resource;
 	}
 }

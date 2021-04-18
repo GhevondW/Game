@@ -13,13 +13,38 @@ namespace game {
 
 		virtual const Config& Load(const std::string& path) = 0;
 
-		int GetRow() const { return _config.row;  }
-		int GetColumn() const { return _config.column; }
-		int GetMovesCount() const { return _config.moves_count; }
-		int GetFigColorsCount() const { return _config.fig_colors_count; }
-		const std::vector<Objective>& GetObjectives() const { return _config.objectives; }
+		int GetRow() const { 
+			if (_config == nullptr) throw "invalid operation";
+			return _config->row;  
+		}
+
+		int GetColumn() const { 
+			if (_config == nullptr) throw "invalid operation";
+			return _config->column; 
+		}
+
+		int GetMovesCount() const { 
+			if (_config == nullptr) throw "invalid operation";
+			return _config->moves_count; 
+		}
+
+		int GetFigColorsCount() const { 
+			if (_config == nullptr) throw "invalid operation";
+			return _config->fig_colors_count; 
+		}
+
+		const std::string& GetBoard() const {
+			if (_config == nullptr) throw "invalid operation";
+			return _config->board;
+		}
+
+		const std::vector<Objective>& GetObjectives() const { 
+			if (_config == nullptr) throw "invalid operation";
+			return _config->objectives; 
+		}
+
 	protected:
-		Config _config{};
+		std::unique_ptr<Config> _config{nullptr};
 	};
 
 	struct JSONConfigDataProvider : public IConfigDataProvider

@@ -11,11 +11,17 @@ namespace game
 		virtual ~IResourceDataProvider() = default;
 		virtual const Resource& Load(const std::string& path) = 0;
 
-		const std::vector<ElementInfo>& GetElements() const { return _resource.elements; }
-		const std::vector<TileInfo>& GetTiles() const { return _resource.tiles; }
+		const std::vector<ElementInfo>& GetElements() const { 
+			if (_resource == nullptr) throw "invalid operation";
+			return _resource->elements; 
+		}
+		const std::vector<TileInfo>& GetTiles() const { 
+			if (_resource == nullptr) throw "invalid operation";
+			return _resource->tiles; 
+		}
 
 	protected:
-		Resource _resource{};
+		std::unique_ptr<Resource> _resource{nullptr};
 	};
 
 	struct JSONResourceDataProvider : public IResourceDataProvider

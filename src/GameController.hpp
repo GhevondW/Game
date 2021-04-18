@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "Models/Element.h"
 #include "DataProviders/ConfigDataProvider.h"
+#include "Board.h"
 
 #endif /* GameController_hpp */
 
@@ -27,11 +28,15 @@ public :
     void UpdateGameStatus(GameStatus &status);
 
 private:
-    void _run();
+
+    void _LoadInitialData();
+    void _Run();
 
 private:
     GameStatus _gameStatus = NotStarted;
-    RenderWindow *_app;
-    std::unique_ptr<game::ElementFactory>           _factory{nullptr};
-    std::unique_ptr<game::JSONConfigDataProvider>   _config_dp{nullptr};
+    RenderWindow* _app{nullptr};
+
+    std::shared_ptr<game::IConfigDataProvider>      _config_dp{ nullptr };
+    std::shared_ptr<game::IResourceDataProvider>    _resource_dp{ nullptr };
+    std::unique_ptr<game::Board>                    _board{ nullptr };
 };
