@@ -5,10 +5,22 @@
 #include "Models/Element.h"
 #include <vector>
 #include <SFML/Graphics.hpp>
+#include "Models/Kernel.h"
 
 namespace game
 {
-	class Board
+
+    struct IBoard
+    {
+        IBoard() = default;
+        virtual ~IBoard() = default;
+        
+        virtual void Init() = 0;
+        virtual void Draw(sf::RenderWindow& window) = 0;
+        virtual void HandleClick(sf::Event click) = 0;
+    };
+
+	class Board : public IBoard
 	{
 	public:
 		Board(std::shared_ptr<IConfigDataProvider>,
@@ -29,14 +41,15 @@ namespace game
 		auto _ResetCoords() -> void;
 		auto _CheckMoveCoords() -> bool;
 		auto _Move() -> void;
+        auto _CheckBoard() -> void;
 
 	private:
 		std::shared_ptr<IConfigDataProvider>	_config_dp{ nullptr };
 		std::shared_ptr<IResourceDataProvider>	_resource_dp{ nullptr };
 		std::unique_ptr<ElementFactory>			_factory{nullptr};
 
-		std::vector<std::vector<Tile*>>			_tiles{};
-		std::vector<std::vector<Element*>>		_board{};
+		Matrix<Tile*>			                _tiles{};
+        Matrix<Element*>		                _board{};
 
 		int										_top_left_x{};
 		int										_top_left_y{};
@@ -44,7 +57,7 @@ namespace game
 		
 		//CODE FOR TESTING
 		//bool									_in{false};
-		sf::Vector2i							_position{-1, -1};
+		sf::Vector2i							_position{ -1, -1 };
 		sf::Vector2i							_position_c{ -1, -1 };
 		sf::Vector2i							_position_n{ -1, -1 };
 	};

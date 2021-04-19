@@ -1,4 +1,6 @@
 #include "Board.h"
+#include "Models/Kernel.h"
+#include <set>
 
 using namespace game;
 
@@ -76,7 +78,9 @@ void Board::HandleClick(sf::Event click)
 					_Move();
 				}
 			}
-
+            
+            _CheckBoard();
+            
 		}
 	}
 }
@@ -144,14 +148,14 @@ auto Board::_GetElementPosition(sf::Vector2i coord) -> sf::Vector2i
 
 auto Board::_ResetCoords() -> void
 {
-	_position_c = { -1 ,-1 };
-	_position_n = { -1 ,-1 };
+	_position_c = { -1 , -1};
+	_position_n = { -1 , -1};
 }
 
 auto Board::_CheckMoveCoords() -> bool
 {
-	return (_position_c.x == _position_n.x) && ((_position_c.y == _position_n.y - 1) || (_position_c.y == _position_n.y + 1)) ||
-		(_position_c.y == _position_n.y) && ((_position_c.x == _position_n.x - 1) || (_position_c.x == _position_n.x + 1));
+    return ((_position_c.x == _position_n.x) && ((_position_c.y == _position_n.y - 1) || (_position_c.y == _position_n.y + 1))) ||
+    ((_position_c.y == _position_n.y) && ((_position_c.x == _position_n.x - 1) || (_position_c.x == _position_n.x + 1)));
 }
 
 auto Board::_Move() -> void
@@ -159,6 +163,66 @@ auto Board::_Move() -> void
 	auto* tmp = _board[_position_c.y][_position_c.x];
 	_board[_position_c.y][_position_c.x] = _board[_position_n.y][_position_n.x];
 	_board[_position_n.y][_position_n.x] = tmp;
+}
+
+auto Board::_CheckBoard() -> void
+{
+    std::multiset<Kernel, Kernel::Comparator> kernels;
+    
+    Kernel k1{{ {1,1},
+                {1,1}}};
+    Kernel k2{{{1,1,1}}};
+    Kernel k3{{{1},{1},{1}}};
+    Kernel k4{{{1,1,1,1}}};
+    Kernel k5{{{1},{1},{1},{1}}};
+    
+    kernels.insert(std::move(k1));
+    kernels.insert(std::move(k2));
+    kernels.insert(std::move(k3));
+    kernels.insert(std::move(k4));
+    kernels.insert(std::move(k5));
+    
+    size_t rows = _config_dp->GetRow();
+    size_t cols = _config_dp->GetColumn();
+    
+    auto current = kernels.rbegin();
+    while (current != kernels.rend()) {
+        const Kernel& kernel = *current;
+        ++current;
+    
+        size_t kernel_row = kernel.GetRows();
+        size_t kernel_cols = kernel.GetCols();
+        
+        for (int y = 0; y < rows; ++y) {
+            for (int x = 0; x < cols; ++x) {
+                Element::TYPE type = _board[y][x]->GetType();
+                
+                if(type == Element::TYPE::EMPTY) continue;
+                
+                std::vector<std::pair<int, int>> same{};
+                bool result = false;
+                
+                if(y + kernel_row - 1 < rows && x + kernel_cols - 1 < cols){
+                    for (int ky = 0; ky < kernel_row; ++ky) {
+                        for (int kx = 0; kx < kernel_cols; ++kx) {
+                            if(kernel.At(ky, kx) == 1 && _board[y + ky][x + kx]->GetType() == type){
+                                same.push_back({y + ky, x + kx});
+                            }
+                        }
+                    }
+                    result = same.size() == kernel.GetRank();
+                }
+                
+                if(result){
+                    for (auto iter : same) {
+                        delete _board[iter.first][iter.second];
+                        _board[iter.first][iter.second] = _factory->CreateElement(Element::TYPE::EMPTY);
+                    }
+                }
+                
+            }
+        }
+    }
 }
 
 void Board::_Dealloc()
