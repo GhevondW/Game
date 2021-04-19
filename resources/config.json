@@ -5,15 +5,15 @@
   "fig_colors_count": 5,
   "objectives": [
     {
-      "color": "violet",
+      "code": "v",
       "count": 3
     },
     {
-      "color": "blue",
+      "code": "b",
       "count": 5
     },
     {
-      "color": "red",
+      "code": "r",
       "count": 10
     }
   ],

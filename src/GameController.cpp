@@ -11,7 +11,7 @@ using namespace game;
 GameController::GameController() {
     _config_dp = std::make_shared<JSONConfigDataProvider>();
     _resource_dp = std::make_shared<JSONResourceDataProvider>();
-    _board = std::make_unique<Board>(_config_dp, _resource_dp, X, Y);
+    _kernels = std::make_shared<KernelProvider>();
 }
 
 void GameController::UpdateGameStatus(GameStatus &status) {
@@ -20,6 +20,8 @@ void GameController::UpdateGameStatus(GameStatus &status) {
 
 void GameController::StartGame() {
     _LoadInitialData();
+
+    _board = std::make_unique<Board>(_config_dp, _resource_dp, _kernels, X, Y);
     _board->Init();
     _app = new RenderWindow(VideoMode(750, 950), "Game", Style::Close);
     _app->setFramerateLimit(60);
@@ -51,4 +53,21 @@ void GameController::_LoadInitialData()
     std::string rpath = R_PATH;
     _config_dp->Load(rpath + "config.json");
     _resource_dp->Load(rpath + "res.json");
+
+
+    _kernels->AddKernel({{1,1},
+                         {1,1}});
+
+    _kernels->AddKernel({{1,1,1}});
+
+    _kernels->AddKernel({{1},
+                         {1},
+                         {1}});
+
+    _kernels->AddKernel({{1,1,1,1}});
+
+    _kernels->AddKernel({{1},
+                         {1},
+                         {1},
+                         {1}});
 }

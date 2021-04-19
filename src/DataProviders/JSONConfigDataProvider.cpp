@@ -5,7 +5,7 @@
 namespace game{
 	static void from_json(const nlohmann::json& j, Objective& sb)
 	{
-		sb.color = j.at("color");
+		sb.code = j.at("code");
 		sb.count = j.at("count");
 	}
 

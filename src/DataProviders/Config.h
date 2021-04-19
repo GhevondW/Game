@@ -6,7 +6,7 @@
 namespace game {
 	struct Objective
 	{
-		std::string color{};
+		std::string code{};
 		size_t		count{};
 	};
 

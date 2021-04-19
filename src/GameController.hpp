@@ -39,4 +39,5 @@ private:
     std::shared_ptr<game::IConfigDataProvider>      _config_dp{ nullptr };
     std::shared_ptr<game::IResourceDataProvider>    _resource_dp{ nullptr };
     std::unique_ptr<game::IBoard>                   _board{ nullptr };
+    std::shared_ptr<game::KernelProvider>           _kernels{ nullptr };
 };

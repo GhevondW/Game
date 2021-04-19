@@ -4,9 +4,13 @@
 
 using namespace game;
 
-Board::Board(std::shared_ptr<IConfigDataProvider> config, std::shared_ptr<IResourceDataProvider> resource, int x, int y)
+Board::Board(std::shared_ptr<IConfigDataProvider> config,
+	std::shared_ptr<IResourceDataProvider> resource,
+	std::shared_ptr<KernelProvider> kernels,
+	int x, int y)
 	:_config_dp(config),
 	_resource_dp(resource),
+	_kernels(kernels),
 	_top_left_x(x),
 	_top_left_y(y)
 {}
@@ -47,6 +51,9 @@ void Board::Init()
 			_board[y][x] = _factory->CreateElement(type);
 		}
 	}
+
+	_score_manager = std::make_unique<ScoreManager>(_config_dp.get(), _factory.get());
+	_score_manager->Init();
 }
 
 void Board::HandleClick(sf::Event click)
@@ -76,11 +83,9 @@ void Board::HandleClick(sf::Event click)
 			if (_position_c.x != -1 && _position_n.x != -1) {
 				if (_CheckMoveCoords()) {
 					_Move();
+					_CheckBoard();
 				}
 			}
-            
-            _CheckBoard();
-            
 		}
 	}
 }
@@ -99,14 +104,16 @@ void Board::Draw(sf::RenderWindow& window)
 			int xPos = top_x + x * TILE_SIZE;
 			int yPos = top_y + y * TILE_SIZE;
 			_tiles[y][x]->SetPosition(xPos, yPos);
-			_board[y][x]->SetCenterOfRect(_tiles[y][x]->GetRectPosition());
 			window.draw(_tiles[y][x]->GetSprite());
-			window.draw(_board[y][x]->GetSprite());
+			if (_board[y][x]) {
+				_board[y][x]->SetCenterOfRect(_tiles[y][x]->GetRectPosition());
+				window.draw(_board[y][x]->GetSprite());
+			}
 		}
 	}
-
 	_DrawClickInfo(window);
 
+	_score_manager->Draw(window);
 }
 
 void Board::_DrawClickInfo(sf::RenderWindow& window)
@@ -130,7 +137,7 @@ void Board::_DrawClickInfo(sf::RenderWindow& window)
 	text.setCharacterSize(24);
 	text.setFillColor(sf::Color::Black);
 	text.setStyle(sf::Text::Bold);
-	text.setPosition({ 50,50 });
+	text.setPosition({ 50,100 });
 	window.draw(text);
 }
 
@@ -138,8 +145,6 @@ auto Board::_GetElementPosition(sf::Vector2i coord) -> sf::Vector2i
 {
 	sf::Vector2i ret{-1, -1};
 	if (_board_rect.contains(coord)) {
-		//int rows = _config_dp->GetRow();
-		//int cols = _config_dp->GetColumn();
 		ret.x = (coord.x - _board_rect.left) / TILE_SIZE;
 		ret.y = (coord.y - _board_rect.top) / TILE_SIZE;
 	}
@@ -165,27 +170,38 @@ auto Board::_Move() -> void
 	_board[_position_n.y][_position_n.x] = tmp;
 }
 
-auto Board::_CheckBoard() -> void
+auto Board::_RemoveRow(size_t y) -> void
 {
-    std::multiset<Kernel, Kernel::Comparator> kernels;
-    
-    Kernel k1{{ {1,1},
-                {1,1}}};
-    Kernel k2{{{1,1,1}}};
-    Kernel k3{{{1},{1},{1}}};
-    Kernel k4{{{1,1,1,1}}};
-    Kernel k5{{{1},{1},{1},{1}}};
-    
-    kernels.insert(std::move(k1));
-    kernels.insert(std::move(k2));
-    kernels.insert(std::move(k3));
-    kernels.insert(std::move(k4));
-    kernels.insert(std::move(k5));
-    
+	int rows = _config_dp->GetRow();
+	if (y < rows) {
+		for (int x = 0; x < _config_dp->GetColumn(); x++)
+		{
+			delete _board[y][x];
+			_board[y][x] = nullptr;
+		}
+	}
+}
+
+auto Board::_RemoveColumn(size_t x) -> void
+{
+	int cols = _config_dp->GetColumn();
+	if (x < cols) {
+		for (int y = 0; y < _config_dp->GetRow(); y++)
+		{
+			delete _board[y][x];
+			_board[y][x] = nullptr;
+		}
+	}
+}
+
+auto Board::_CheckBoard() -> void
+{   
+	const auto& kernels = _kernels->Get();
+
     size_t rows = _config_dp->GetRow();
     size_t cols = _config_dp->GetColumn();
     
-    auto current = kernels.rbegin();
+	auto current = kernels.rbegin();
     while (current != kernels.rend()) {
         const Kernel& kernel = *current;
         ++current;

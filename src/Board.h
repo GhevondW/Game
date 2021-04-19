@@ -6,6 +6,7 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include "Models/Kernel.h"
+#include "ScoreManager.h"
 
 namespace game
 {
@@ -25,6 +26,7 @@ namespace game
 	public:
 		Board(std::shared_ptr<IConfigDataProvider>,
 			std::shared_ptr<IResourceDataProvider>,
+			std::shared_ptr<KernelProvider>,
 			int x = 0,
 			int y = 0);
 		~Board();
@@ -41,12 +43,16 @@ namespace game
 		auto _ResetCoords() -> void;
 		auto _CheckMoveCoords() -> bool;
 		auto _Move() -> void;
+		auto _RemoveRow(size_t y) -> void;
+		auto _RemoveColumn(size_t x) -> void;
         auto _CheckBoard() -> void;
 
 	private:
-		std::shared_ptr<IConfigDataProvider>	_config_dp{ nullptr };
-		std::shared_ptr<IResourceDataProvider>	_resource_dp{ nullptr };
+		std::shared_ptr<IConfigDataProvider>	_config_dp{nullptr};
+		std::shared_ptr<IResourceDataProvider>	_resource_dp{nullptr};
 		std::unique_ptr<ElementFactory>			_factory{nullptr};
+		std::unique_ptr<ScoreManager>			_score_manager{ nullptr };
+		std::shared_ptr<KernelProvider>			_kernels{nullptr};
 
 		Matrix<Tile*>			                _tiles{};
         Matrix<Element*>		                _board{};

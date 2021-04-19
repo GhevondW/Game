@@ -6,7 +6,15 @@
 
 namespace game {
 
-	struct IConfigDataProvider
+	struct IObjectiveProvider
+	{
+		IObjectiveProvider() = default;
+		virtual ~IObjectiveProvider() = default;
+
+		virtual const std::vector<Objective>& GetObjectives() const = 0;
+	};
+
+	struct IConfigDataProvider : public IObjectiveProvider
 	{
 		IConfigDataProvider() = default;
 		virtual ~IConfigDataProvider() = default;
