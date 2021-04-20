@@ -50,7 +50,7 @@ namespace game
         auto _Split(std::string str, const std::string& token) -> std::vector<std::string>;
 		auto _HandleBombClick(sf::Vector2i position) -> void;
 		auto _HandleColorClick(sf::Vector2i position) -> void;
-		auto _SortColumn(const int xPos) -> void;
+		auto _SortColumn() -> void;
 
 	private:
 		std::shared_ptr<IConfigDataProvider>	_config_dp{nullptr};

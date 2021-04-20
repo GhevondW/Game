@@ -100,10 +100,7 @@ auto Board::_HandleBombClick(sf::Vector2i position) -> void
 
 		if (do_move) {
 			_score_manager->UpdateMovesCount();
-			for (int x = 0; x < _config_dp->GetColumn(); x++)
-			{
-				_SortColumn(x);
-			}
+			_SortColumn();
 			_CheckBoard();
 		}
 	}
@@ -140,31 +137,47 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> void
 	}
 }
 
-auto Board::_SortColumn(const int xPos) -> void
+auto Board::_SortColumn() -> void
 {
 	const size_t rows = _config_dp->GetRow();
 	const size_t cols = _config_dp->GetColumn();
 
-	if (xPos < cols) {
-		
-		int max_empty_y = rows;
-		bool swapped = false;
-
-		for (int y = rows - 1; y >= 0; --y)
+	auto Task = [=](int begin_x, int end_x) 
+	{
+		for (int xPos = begin_x; xPos < end_x; xPos++)
 		{
-			if (_board[y][xPos]->GetType() != Element::TYPE::EMPTY) {
-				int y_step = y;
-				while (y_step + 1 < rows && _board[y_step + 1][xPos]->GetType() == Element::TYPE::EMPTY)
+			if (xPos < cols) {
+
+				int max_empty_y = rows;
+				bool swapped = false;
+
+				for (int y = rows - 1; y >= 0; --y)
 				{
-					Element* tmp = _board[y_step][xPos];
-					_board[y_step][xPos] = _board[y_step + 1][xPos];
-					_board[y_step + 1][xPos] = tmp;
-					++y_step;
+					if (_board[y][xPos]->GetType() != Element::TYPE::EMPTY) {
+						int y_step = y;
+						while (y_step + 1 < rows && _board[y_step + 1][xPos]->GetType() == Element::TYPE::EMPTY)
+						{
+							Element* tmp = _board[y_step][xPos];
+							_board[y_step][xPos] = _board[y_step + 1][xPos];
+							_board[y_step + 1][xPos] = tmp;
+							++y_step;
+						}
+					}
 				}
 			}
 		}
+	};
 
+	if (cols < 4) {
+		Task(0, cols);
 	}
+	else {
+		std::thread t1{Task, 0, cols / 2 };
+		std::thread t2{ Task, cols / 2, cols };
+		t1.join();
+		t2.join();
+	}
+
 }
 
 void Board::Draw(sf::RenderWindow& window)
@@ -353,10 +366,7 @@ auto Board::_CheckBoard() -> bool
     
     if(move_status)
     {
-		for (int x = 0; x < cols; x++)
-		{
-			_SortColumn(x);
-		}
+		_SortColumn();
 		_CheckBoard();
     }
     
