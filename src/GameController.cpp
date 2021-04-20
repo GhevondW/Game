@@ -48,7 +48,6 @@ void GameController::_Run() {
         }
         _app->display();
     }
-
 }
 
 void GameController::_LoadInitialData()

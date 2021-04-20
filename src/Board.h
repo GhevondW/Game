@@ -48,6 +48,9 @@ namespace game
         auto _RemoveRect(sf::Vector2i center) -> void;
         auto _CheckBoard() -> bool;
         auto _Split(std::string str, const std::string& token) -> std::vector<std::string>;
+		auto _HandleBombClick(sf::Vector2i position) -> void;
+		auto _HandleColorClick(sf::Vector2i position) -> void;
+		auto _SortColumn(const int xPos) -> void;
 
 	private:
 		std::shared_ptr<IConfigDataProvider>	_config_dp{nullptr};
@@ -65,7 +68,7 @@ namespace game
 		
 		//CODE FOR TESTING
 		//bool									_in{false};
-		sf::Vector2i							_position{ -1, -1 };
+		//sf::Vector2i							_position{ -1, -1 };
 		sf::Vector2i							_position_c{ -1, -1 };
 		sf::Vector2i							_position_n{ -1, -1 };
 	};

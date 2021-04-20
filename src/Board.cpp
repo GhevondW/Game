@@ -66,52 +66,104 @@ void Board::HandleClick(sf::Event click)
         int x = click.mouseButton.x;
         int y = click.mouseButton.y;
         //_in = _board_rect.contains({_x, _y});
-        _position = _GetElementPosition({x, y});
+        auto position = _GetElementPosition({x, y});
 		if (click.mouseButton.button == sf::Mouse::Left)
 		{
-			if (_position.x != -1) {
-				if (_position_c.x == -1 || (_position_c.x != -1 && _position_n.x != -1)) {
-					_position_c = _position;
-					_position_n = { -1, -1 };
-				}
-				else if(_position_n.x == -1){
-					_position_n = _position;
-				}
+			_HandleColorClick(position);
+		}
+        else if(click.mouseButton.button == sf::Mouse::Right){
+			_HandleBombClick(position);
+        }
+	}
+}
+
+auto Board::_HandleBombClick(sf::Vector2i position) -> void
+{
+	if (position.x != -1 && position.y != -1) {
+		Element* element = _board[position.y][position.x];
+		auto type = element->GetType();
+
+		bool do_move = false;
+
+		if (type == Element::TYPE::VBOMB) {
+			_RemoveColumn(position.x);
+			do_move = true;
+		}
+		else if (type == Element::TYPE::HBOMB) {
+			_RemoveRow(position.y);
+			do_move = true;
+		}
+		else if (type == Element::BOMB) {
+			_RemoveRect(position);
+			do_move = true;
+		}
+
+		if (do_move) {
+			_score_manager->UpdateMovesCount();
+			for (int x = 0; x < _config_dp->GetColumn(); x++)
+			{
+				_SortColumn(x);
 			}
-			else {
+			_CheckBoard();
+		}
+	}
+}
+
+auto Board::_HandleColorClick(sf::Vector2i position) -> void
+{
+	if (position.x != -1 && position.y != -1) {
+		if (_position_c.x == -1 || (_position_c.x != -1 && _position_n.x != -1)) {
+			_position_c = position;
+			_position_n = { -1, -1 };
+		}
+		else if (_position_n.x == -1) {
+			_position_n = position;
+		}
+	}
+	else {
+		_ResetCoords();
+	}
+
+	if (_position_c.x != -1 && _position_n.x != -1) {
+		if (_CheckMoveCoords()) {
+			_Move();
+			if (!_CheckBoard())
+			{
+				_Move();
 				_ResetCoords();
 			}
+			else {
+				//TODO if
+				_score_manager->UpdateMovesCount();
+			}
+		}
+	}
+}
 
-			if (_position_c.x != -1 && _position_n.x != -1) {
-				if (_CheckMoveCoords()) {
-					_Move();
-					if(!_CheckBoard())
-                    {
-                        _Move();
-                        _ResetCoords();
-                    }
-                    else{
-                        //TODO if
-                        _score_manager->UpdateMovesCount();
-                    }
+auto Board::_SortColumn(const int xPos) -> void
+{
+	const size_t rows = _config_dp->GetRow();
+	const size_t cols = _config_dp->GetColumn();
+
+	if (xPos < cols) {
+		
+		int max_empty_y = rows;
+		bool swapped = false;
+
+		for (int y = rows - 1; y >= 0; --y)
+		{
+			if (_board[y][xPos]->GetType() != Element::TYPE::EMPTY) {
+				int y_step = y;
+				while (y_step + 1 < rows && _board[y_step + 1][xPos]->GetType() == Element::TYPE::EMPTY)
+				{
+					Element* tmp = _board[y_step][xPos];
+					_board[y_step][xPos] = _board[y_step + 1][xPos];
+					_board[y_step + 1][xPos] = tmp;
+					++y_step;
 				}
 			}
 		}
-        else if(click.mouseButton.button == sf::Mouse::Right){
-            if(_position.x != -1 && _position.y != -1){
-                Element* element = _board[_position.y][_position.x];
-                auto type = element->GetType();
-                if(type == Element::TYPE::VBOMB){
-                    _RemoveColumn(_position.x);
-                }
-                else if(type == Element::TYPE::HBOMB){
-                    _RemoveRow(_position.y);
-                }
-                else if(type == Element::BOMB){
-                    _RemoveRect(_position);
-                }
-            }
-        }
+
 	}
 }
 
@@ -151,9 +203,9 @@ void Board::_DrawClickInfo(sf::RenderWindow& window)
 	}
 	sf::Text text;
 	text.setFont(MyFont);
-	text.setString("x:" + std::to_string(_position.x) +
+	text.setString(/*"x:" + std::to_string(_position.x) +
 		", y:" + std::to_string(_position.y) +
-		", Status:" + std::to_string(_position.x != -1) + 
+		", Status:" + std::to_string(_position.x != -1) + */
 		", x_c:" + std::to_string(_position_c.x) +
 		", y_c:" + std::to_string(_position_c.y) + 
 		", x_n:" + std::to_string(_position_n.x) + 
@@ -301,7 +353,11 @@ auto Board::_CheckBoard() -> bool
     
     if(move_status)
     {
-        _CheckBoard();
+		for (int x = 0; x < cols; x++)
+		{
+			_SortColumn(x);
+		}
+		_CheckBoard();
     }
     
     return move_status;
