@@ -28,8 +28,9 @@ namespace game {
     public:
     
         Kernel() = default;
-        Kernel(const IntMatrix& mat)
-            :_mat(mat)
+        Kernel(const IntMatrix& mat, Element::TYPE reward = Element::TYPE::EMPTY)
+            :_mat(mat),
+            _reward(reward)
         {
             _row = mat.size();
             _column = mat[0].size();
@@ -39,16 +40,19 @@ namespace game {
                 }
             }
         }
-        Kernel(Kernel&& kernel)
+        Kernel(Kernel&& kernel, Element::TYPE reward = Element::TYPE::EMPTY)
             :_mat(std::move(kernel._mat)),
             _row(kernel._row),
             _column(kernel._column),
-            _rank(kernel._rank)
+            _rank(kernel._rank),
+            _reward(reward)
         {}
     
         size_t GetRows() const { return _row; };
         size_t GetCols() const { return _column; };
         size_t GetRank() const { return _rank; };
+        Element::TYPE GetRewardType() const { return _reward; }
+        
     
         int At(int y, int x) const
         {
@@ -56,10 +60,11 @@ namespace game {
         }
     
     private:
-        IntMatrix   _mat{};
-        size_t      _row{};
-        size_t      _column{};
-        size_t      _rank{};
+        IntMatrix       _mat{};
+        size_t          _row{};
+        size_t          _column{};
+        size_t          _rank{};
+        Element::TYPE   _reward{Element::TYPE::EMPTY};
     };
 
     class KernelProvider
@@ -70,9 +75,9 @@ namespace game {
 
         //TODO
         void LoadFromFile() {}
-        void AddKernel(const IntMatrix& mat)
+        void AddKernel(const IntMatrix& mat, Element::TYPE reward = Element::TYPE::EMPTY)
         {
-            _kernels.emplace(mat);
+            _kernels.emplace(mat, reward);
         }
         void AddKernel(Kernel&& kernel)
         {

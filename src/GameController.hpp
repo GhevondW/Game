@@ -25,7 +25,7 @@ public :
     GameController();
 
     void StartGame();
-    void UpdateGameStatus(GameStatus &status);
+    void UpdateGameStatus(GameStatus status);
 
 private:
 

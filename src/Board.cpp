@@ -1,6 +1,7 @@
 #include "Board.h"
 #include "Models/Kernel.h"
 #include <set>
+#include <thread>
 
 using namespace game;
 
@@ -15,7 +16,7 @@ Board::Board(std::shared_ptr<IConfigDataProvider> config,
 	_top_left_y(y)
 {}
 
-void Board::Init()
+bool Board::Init()
 {
 	_factory = std::make_unique<ElementFactory>(_resource_dp);
 	_Dealloc();
@@ -24,7 +25,7 @@ void Board::Init()
 	int cols = _config_dp->GetColumn();
 	const std::string& config_string = _config_dp->GetBoard();
 
-	if (config_string.empty() || rows * cols > config_string.size()) return;
+	if (config_string.empty() || rows * cols > config_string.size()) return false;
 
 	_tiles.resize(rows);
 	_board.resize(rows);
@@ -34,6 +35,8 @@ void Board::Init()
 	_board_rect.width = cols * TILE_SIZE;
 	_board_rect.height = rows * TILE_SIZE;
 
+    auto tokens = _Split(config_string, "-");
+    
 	for (size_t y = 0; y < rows; y++)
 	{
 		int row_begin_color = y % 2;
@@ -47,26 +50,25 @@ void Board::Init()
 
 
 			int str_index = y * cols + x;
-			auto type = _factory->GetElemTypeByCode(std::string{ config_string[str_index] });
+			auto type = _factory->GetElemTypeByCode(tokens[str_index]);
 			_board[y][x] = _factory->CreateElement(type);
 		}
 	}
 
 	_score_manager = std::make_unique<ScoreManager>(_config_dp.get(), _factory.get());
-	_score_manager->Init();
+	return _score_manager->Init();
 }
 
 void Board::HandleClick(sf::Event click)
 {
 	if (click.type == sf::Event::MouseButtonPressed)
 	{
+        int x = click.mouseButton.x;
+        int y = click.mouseButton.y;
+        //_in = _board_rect.contains({_x, _y});
+        _position = _GetElementPosition({x, y});
 		if (click.mouseButton.button == sf::Mouse::Left)
 		{
-			int x = click.mouseButton.x;
-			int y = click.mouseButton.y;
-			//_in = _board_rect.contains({_x, _y});
-			_position = _GetElementPosition({x, y});
-
 			if (_position.x != -1) {
 				if (_position_c.x == -1 || (_position_c.x != -1 && _position_n.x != -1)) {
 					_position_c = _position;
@@ -83,10 +85,33 @@ void Board::HandleClick(sf::Event click)
 			if (_position_c.x != -1 && _position_n.x != -1) {
 				if (_CheckMoveCoords()) {
 					_Move();
-					_CheckBoard();
+					if(!_CheckBoard())
+                    {
+                        _Move();
+                        _ResetCoords();
+                    }
+                    else{
+                        //TODO if
+                        _score_manager->UpdateMovesCount();
+                    }
 				}
 			}
 		}
+        else if(click.mouseButton.button == sf::Mouse::Right){
+            if(_position.x != -1 && _position.y != -1){
+                Element* element = _board[_position.y][_position.x];
+                auto type = element->GetType();
+                if(type == Element::TYPE::VBOMB){
+                    _RemoveColumn(_position.x);
+                }
+                else if(type == Element::TYPE::HBOMB){
+                    _RemoveRow(_position.y);
+                }
+                else if(type == Element::BOMB){
+                    _RemoveRect(_position);
+                }
+            }
+        }
 	}
 }
 
@@ -176,8 +201,11 @@ auto Board::_RemoveRow(size_t y) -> void
 	if (y < rows) {
 		for (int x = 0; x < _config_dp->GetColumn(); x++)
 		{
+            auto type = _board[y][x]->GetType();
+            _score_manager->UpdateScore(type, 1);
+            
 			delete _board[y][x];
-			_board[y][x] = nullptr;
+			_board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
 		}
 	}
 }
@@ -188,23 +216,44 @@ auto Board::_RemoveColumn(size_t x) -> void
 	if (x < cols) {
 		for (int y = 0; y < _config_dp->GetRow(); y++)
 		{
+            auto type = _board[y][x]->GetType();
+            _score_manager->UpdateScore(type, 1);
+            
 			delete _board[y][x];
-			_board[y][x] = nullptr;
+            _board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
 		}
 	}
 }
 
-auto Board::_CheckBoard() -> void
+auto Board::_RemoveRect(sf::Vector2i center) -> void
+{
+    if(center.x != -1 && center.y != -1) {
+        int begin_x = MAX(center.x - 1, 0);
+        int begin_y = MAX(center.y - 1, 0);
+        int end_x = MIN(center.x + 1, _config_dp->GetColumn() - 1);
+        int end_y = MIN(center.y + 1, _config_dp->GetRow() - 1);
+        for (int y = begin_y; y <= end_y; y++) {
+            for (int x = begin_x; x <= end_x; x++) {
+                auto type = _board[y][x]->GetType();
+                _score_manager->UpdateScore(type, 1);
+                
+                delete _board[y][x];
+                _board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
+            }
+        }
+    }
+}
+
+auto Board::_CheckBoard() -> bool
 {   
 	const auto& kernels = _kernels->Get();
-
+    bool move_status = false;
     size_t rows = _config_dp->GetRow();
     size_t cols = _config_dp->GetColumn();
     
 	auto current = kernels.rbegin();
     while (current != kernels.rend()) {
         const Kernel& kernel = *current;
-        ++current;
     
         size_t kernel_row = kernel.GetRows();
         size_t kernel_cols = kernel.GetCols();
@@ -230,17 +279,52 @@ auto Board::_CheckBoard() -> void
                 }
                 
                 if(result){
+                    move_status = true;
+                    int c = 0;
+                    _score_manager->UpdateScore(type, kernel.GetRank());
                     for (auto iter : same) {
                         delete _board[iter.first][iter.second];
-                        _board[iter.first][iter.second] = _factory->CreateElement(Element::TYPE::EMPTY);
+                        Element::TYPE res_type = Element::TYPE::EMPTY;
+                        if(kernel.GetRewardType() != Element::TYPE::EMPTY && c == same.size() / 2){
+                            res_type = kernel.GetRewardType();
+                        }
+                        _board[iter.first][iter.second] = _factory->CreateElement(res_type);
+                        ++c;
                     }
                 }
                 
             }
         }
+        
+        ++current;
     }
+    
+    if(move_status)
+    {
+        _CheckBoard();
+    }
+    
+    return move_status;
 }
 
+auto Board::_Split(std::string str, const std::string& token) -> std::vector<std::string>
+{
+    using namespace std;
+    vector<string>result;
+    while(str.size()){
+        int index = str.find(token);
+        if(index!=string::npos){
+            result.push_back(str.substr(0,index));
+            str = str.substr(index+token.size());
+            if(str.size()==0)result.push_back(str);
+        }else{
+            result.push_back(str);
+            str = "";
+        }
+    }
+    return result;
+}
+    
 void Board::_Dealloc()
 {
 	for (size_t i = 0; i < _board.size(); i++)

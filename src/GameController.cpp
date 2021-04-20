@@ -14,7 +14,7 @@ GameController::GameController() {
     _kernels = std::make_shared<KernelProvider>();
 }
 
-void GameController::UpdateGameStatus(GameStatus &status) {
+void GameController::UpdateGameStatus(GameStatus status) {
     _gameStatus = status;
 }
 
@@ -22,7 +22,10 @@ void GameController::StartGame() {
     _LoadInitialData();
 
     _board = std::make_unique<Board>(_config_dp, _resource_dp, _kernels, X, Y);
-    _board->Init();
+    if(!_board->Init()){
+        UpdateGameStatus(GameStatus::Failed);
+        return;
+    }
     _app = new RenderWindow(VideoMode(750, 950), "Game", Style::Close);
     _app->setFramerateLimit(60);
     _Run();
@@ -56,7 +59,7 @@ void GameController::_LoadInitialData()
 
 
     _kernels->AddKernel({{1,1},
-                         {1,1}});
+                        {1,1}}, Element::TYPE::BOMB);
 
     _kernels->AddKernel({{1,1,1}});
 
@@ -64,10 +67,10 @@ void GameController::_LoadInitialData()
                          {1},
                          {1}});
 
-    _kernels->AddKernel({{1,1,1,1}});
+    _kernels->AddKernel({{1,1,1,1}}, Element::TYPE::VBOMB);
 
     _kernels->AddKernel({{1},
                          {1},
                          {1},
-                         {1}});
+                         {1}}, Element::TYPE::HBOMB);
 }

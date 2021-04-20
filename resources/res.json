@@ -28,7 +28,7 @@
 		{
 			"name": "bomb",
 			"image_path": "bomb.png",
-			"code": "b"
+			"code": "bo"
 		},
 		{
 			"name": "vbomb",

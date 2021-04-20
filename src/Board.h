@@ -16,7 +16,7 @@ namespace game
         IBoard() = default;
         virtual ~IBoard() = default;
         
-        virtual void Init() = 0;
+        virtual bool Init() = 0;
         virtual void Draw(sf::RenderWindow& window) = 0;
         virtual void HandleClick(sf::Event click) = 0;
     };
@@ -31,7 +31,7 @@ namespace game
 			int y = 0);
 		~Board();
 
-		void Init();
+		bool Init();
 		void Draw(sf::RenderWindow& window);
 		void HandleClick(sf::Event click);
 
@@ -45,7 +45,9 @@ namespace game
 		auto _Move() -> void;
 		auto _RemoveRow(size_t y) -> void;
 		auto _RemoveColumn(size_t x) -> void;
-        auto _CheckBoard() -> void;
+        auto _RemoveRect(sf::Vector2i center) -> void;
+        auto _CheckBoard() -> bool;
+        auto _Split(std::string str, const std::string& token) -> std::vector<std::string>;
 
 	private:
 		std::shared_ptr<IConfigDataProvider>	_config_dp{nullptr};

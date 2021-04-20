@@ -12,6 +12,7 @@ namespace game {
 		virtual ~IObjectiveProvider() = default;
 
 		virtual const std::vector<Objective>& GetObjectives() const = 0;
+        virtual int GetMovesCount() const = 0;
 	};
 
 	struct IConfigDataProvider : public IObjectiveProvider
