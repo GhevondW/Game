@@ -12,6 +12,7 @@ GameController::GameController() {
     _config_dp = std::make_shared<JSONConfigDataProvider>();
     _resource_dp = std::make_shared<JSONResourceDataProvider>();
     _kernels = std::make_shared<KernelProvider>();
+    _board = std::unique_ptr<Board>(nullptr);
 }
 
 void GameController::UpdateGameStatus(GameStatus status) {
@@ -22,10 +23,10 @@ void GameController::StartGame() {
     _LoadInitialData();
 
     _board = std::make_unique<Board>(_config_dp, _resource_dp, _kernels, X, Y);
-    if(!_board->Init()){
+    
+    if(!_board->Init())
         UpdateGameStatus(GameStatus::Failed);
-        return;
-    }
+    
     _app = new RenderWindow(VideoMode(750, 950), "Game", Style::Close);
     _app->setFramerateLimit(60);
     _Run();

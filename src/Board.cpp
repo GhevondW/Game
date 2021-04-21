@@ -2,6 +2,7 @@
 #include "Models/Kernel.h"
 #include <set>
 #include <thread>
+#include <iostream>
 
 using namespace game;
 
@@ -25,7 +26,7 @@ bool Board::Init()
 	int cols = _config_dp->GetColumn();
 	const std::string& config_string = _config_dp->GetBoard();
 
-	if (config_string.empty() || rows * cols > config_string.size()) return false;
+	if (config_string.empty()) return false;
 
 	_tiles.resize(rows);
 	_board.resize(rows);
@@ -36,6 +37,8 @@ bool Board::Init()
 	_board_rect.height = rows * TILE_SIZE;
 
     auto tokens = _Split(config_string, "-");
+    
+    if(tokens.size() < rows * cols) return false;
     
 	for (size_t y = 0; y < rows; y++)
 	{
@@ -67,17 +70,23 @@ void Board::HandleClick(sf::Event click)
         int y = click.mouseButton.y;
         //_in = _board_rect.contains({_x, _y});
         auto position = _GetElementPosition({x, y});
+        bool result = false;
 		if (click.mouseButton.button == sf::Mouse::Left)
 		{
-			_HandleColorClick(position);
+            result = _HandleColorClick(position);
 		}
         else if(click.mouseButton.button == sf::Mouse::Right){
-			_HandleBombClick(position);
+            result = _HandleBombClick(position);
         }
+        
+//        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+//        if(result){
+//            _GenerateNewElements();
+//        }
 	}
 }
 
-auto Board::_HandleBombClick(sf::Vector2i position) -> void
+auto Board::_HandleBombClick(sf::Vector2i position) -> bool
 {
 	if (position.x != -1 && position.y != -1) {
 		Element* element = _board[position.y][position.x];
@@ -101,12 +110,15 @@ auto Board::_HandleBombClick(sf::Vector2i position) -> void
 		if (do_move) {
 			_score_manager->UpdateMovesCount();
 			_SortColumn();
-			_CheckBoard();
+            _GenerateNewElements();
+//			_CheckBoard();
 		}
+        
+        return do_move;
 	}
 }
 
-auto Board::_HandleColorClick(sf::Vector2i position) -> void
+auto Board::_HandleColorClick(sf::Vector2i position) -> bool
 {
 	if (position.x != -1 && position.y != -1) {
 		if (_position_c.x == -1 || (_position_c.x != -1 && _position_n.x != -1)) {
@@ -119,10 +131,18 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> void
 	}
 	else {
 		_ResetCoords();
+        return false;
 	}
 
-	if (_position_c.x != -1 && _position_n.x != -1) {
+	if (_position_c.x != -1 && _position_c.y != -1 && _position_n.x != -1 && _position_n.y != -1) {
 		if (_CheckMoveCoords()) {
+            
+            if(_IsElementBomb(_position_c) && _IsElementBomb(_position_n))
+            {
+                _ResetCoords();
+                return false;
+            }
+            
 			_Move();
 			if (!_CheckBoard())
 			{
@@ -132,9 +152,12 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> void
 			else {
 				//TODO if
 				_score_manager->UpdateMovesCount();
+                return true;
 			}
 		}
 	}
+    
+    return false;
 }
 
 auto Board::_SortColumn() -> void
@@ -178,6 +201,36 @@ auto Board::_SortColumn() -> void
 		t2.join();
 	}
 
+}
+
+auto Board::_GenerateNewElements() -> void
+{
+    const size_t rows = _config_dp->GetRow();
+    const size_t cols = _config_dp->GetColumn();
+    const size_t max = _config_dp->GetFigColorsCount();
+    for (int y = 0; y < rows; ++y) {
+        for (int x = 0; x < cols; ++x) {
+            if(_board[y][x] && _board[y][x]->GetType() == Element::TYPE::EMPTY){
+                delete _board[y][x];
+                _board[y][x] = nullptr;
+                Element* res = _factory->CreateRandomElement(max - 1);
+                if(res->GetType() == Element::TYPE::EMPTY) {
+                    bool b = false;
+                    std::cout<<"asd"<<std::endl;
+                }
+                _board[y][x] = res;
+            }
+        }
+    }
+    
+    _CheckBoard();
+}
+
+auto Board::_IsElementBomb(sf::Vector2i point) -> bool
+{
+    return _board[point.y][point.x]->GetType() == Element::TYPE::BOMB ||
+    _board[point.y][point.x]->GetType() == Element::TYPE::VBOMB ||
+    _board[point.y][point.x]->GetType() == Element::TYPE::HBOMB;
 }
 
 void Board::Draw(sf::RenderWindow& window)
@@ -327,6 +380,8 @@ auto Board::_CheckBoard() -> bool
             for (int x = 0; x < cols; ++x) {
                 Element::TYPE type = _board[y][x]->GetType();
                 
+                if(_IsElementBomb({x, y})) continue;
+                
                 if(type == Element::TYPE::EMPTY) continue;
                 
                 std::vector<std::pair<int, int>> same{};
@@ -367,7 +422,8 @@ auto Board::_CheckBoard() -> bool
     if(move_status)
     {
 		_SortColumn();
-		_CheckBoard();
+//		_CheckBoard();
+        _GenerateNewElements();
     }
     
     return move_status;
@@ -399,6 +455,8 @@ void Board::_Dealloc()
 		{
 			delete _board[i][j];
 			delete _tiles[i][j];
+            _board[i][j] = nullptr;
+            _tiles[i][j] = nullptr;
 		}
 	}
 	_board.clear();

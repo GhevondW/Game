@@ -29,9 +29,9 @@ namespace game
 
 	public:
 		Element() = default;
-		Element(TYPE type, const std::string code, const sf::Texture& texture)
+		Element(TYPE type,/*, const std::string code,*/ const sf::Texture& texture)
 			:_type(type),
-			_code(code),
+//			_code(code),
 			_sprite(texture)
 		{}
 
@@ -52,11 +52,11 @@ namespace game
 			}
 		}
 		TYPE GetType() const { return _type; }
-		const std::string& GetCode() const { return _code; }
+//		const std::string& GetCode() const { return _code; }
 
 	private:
 		TYPE			_type{};
-		std::string		_code{};
+//		std::string		_code{};
 		sf::Sprite		_sprite{};
 	};
 
@@ -132,28 +132,16 @@ namespace game
 		Element* CreateElement(Element::TYPE type)
 		{
 			if (_resource_dp == nullptr) return nullptr;
-
-			std::string code = "empty";
-
-			if (_elem_texture_cache.count(type) == 0) {
-				_elem_texture_cache.insert({ type, sf::Texture{} });
-			}
-
-			if (type != Element::TYPE::EMPTY) {
-				const auto& ref = _resource_dp->GetElements();
-				const ElementInfo& info = ref[(int)type];
-				code = info.code;
-				//if (_elem_texture_cache.count(type) == 0) {
-				//	_elem_texture_cache.insert({ type, sf::Texture{} });
-				std::string path = R_PATH;
-				path += info.image_path;
-
-				_elem_texture_cache[type].loadFromFile(path);
-				//}
-			}
-
-			return new Element(type, code, _elem_texture_cache.at(type));
+			return new Element(type, _GetTexture(type));
 		}
+        
+        Element* CreateRandomElement(size_t max_degree)
+        {
+            if (_resource_dp == nullptr || max_degree > 4) return nullptr;
+            size_t rand = std::rand() % max_degree;
+            Element::TYPE type = (Element::TYPE)rand;
+            return new Element(type, _GetTexture(type));
+        }
 
 		Tile* CreateTile(Tile::TYPE type)
 		{
@@ -173,6 +161,26 @@ namespace game
 			return new Tile(type, info.code, _tile_texture_cache.at(type));
 		}
 
+    private:
+        
+        sf::Texture& _GetTexture(Element::TYPE type)
+        {
+            if (_elem_texture_cache.count(type) == 0) {
+                _elem_texture_cache.insert({ type, sf::Texture{} });
+            }
+
+            if (type != Element::TYPE::EMPTY) {
+                const auto& ref = _resource_dp->GetElements();
+                const ElementInfo& info = ref[(int)type];
+                std::string path = R_PATH;
+                path += info.image_path;
+
+                _elem_texture_cache[type].loadFromFile(path);
+            }
+            
+            return _elem_texture_cache[type];
+        }
+        
 	public:
 		std::shared_ptr<IResourceDataProvider>	_resource_dp{nullptr};
 		std::map<Element::TYPE, sf::Texture>	_elem_texture_cache{};
