@@ -17,6 +17,7 @@ if(${SFML_FOUND})
 
     target_link_libraries(${TARGET_NAME} ${SFML_LIBRARIES})
     include_directories("${CMAKE_SOURCE_DIR}/Dependencies/nlohmann/include/")
+    FILE(COPY resources DESTINATION "${CMAKE_BINARY_DIR}")
 else() 
     message(SEND_ERROR "Could not find SFML library. Please refer to: https://www.sfml-dev.org/")
     if(WIN32)

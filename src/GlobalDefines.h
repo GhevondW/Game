@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#define R_PATH "..\\..\\resources\\"
+#define R_PATH "resources/"
 #define TILE_SIZE 87
 
 template<class T>
