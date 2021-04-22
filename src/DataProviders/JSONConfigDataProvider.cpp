@@ -10,10 +10,11 @@ namespace game{
 	}
 
 
-	const Config& JSONConfigDataProvider::Load(const std::string& path)
+	LoadStatus JSONConfigDataProvider::Load(const std::string& path)
 	{
 		using namespace nlohmann;
-		if (_config) return *_config;
+		LoadStatus status = LoadStatus::OK;
+		//if (_config) return LoadStatus::OK;
 
 		_config = std::make_unique<Config>();
 
@@ -30,8 +31,12 @@ namespace game{
 			_config->objectives.resize(sj.size());
 			std::copy(sj.begin(), sj.end(), _config->objectives.begin());
 		}
+		else
+		{
+			status = LoadStatus::FileNotFound;
+		}
 
 		file.close();
-		return *_config;
+		return status;
 	}
 }

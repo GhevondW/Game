@@ -3,6 +3,7 @@
 
 #include "Config.h"
 #include <memory>
+#include "LoadStatus.h"
 
 namespace game {
 
@@ -20,7 +21,7 @@ namespace game {
 		IConfigDataProvider() = default;
 		virtual ~IConfigDataProvider() = default;
 
-		virtual const Config& Load(const std::string& path) = 0;
+		virtual LoadStatus Load(const std::string& path) = 0;
 
 		int GetRow() const { 
 			if (_config == nullptr) throw "invalid operation";
@@ -58,7 +59,7 @@ namespace game {
 
 	struct JSONConfigDataProvider : public IConfigDataProvider
 	{
-		const Config& Load(const std::string& path) override;
+		LoadStatus Load(const std::string& path) override;
 	};
 
 	//struct XMLConfigDataProvider : public IConfigDataProvider

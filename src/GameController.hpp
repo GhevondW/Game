@@ -16,7 +16,8 @@ enum GameStatus {
     NotStarted,
     Started,
     Won,
-    Failed
+    Failed,
+    LoadInitialDataFailed
 };
 
 class GameController {
@@ -29,15 +30,19 @@ public :
 
 private:
 
-    void _LoadInitialData();
+    bool _LoadInitialData();
     void _Run();
+    void _Draw();
 
 private:
-    GameStatus _gameStatus = NotStarted;
-    RenderWindow* _app{nullptr};
-
+    GameStatus                                      _gameStatus = NotStarted;
+    game::IScoreController::STATUS                  _status = game::IScoreController::STATUS::Game;
+    RenderWindow*                                   _app{nullptr};
+        
     std::shared_ptr<game::IConfigDataProvider>      _config_dp{ nullptr };
     std::shared_ptr<game::IResourceDataProvider>    _resource_dp{ nullptr };
+    std::shared_ptr<game::IElementFactory>		    _factory{ nullptr };
+    std::shared_ptr<game::IScoreManager>            _score_manager{ nullptr };
     std::unique_ptr<game::IBoard>                   _board{ nullptr };
     std::shared_ptr<game::KernelProvider>           _kernels{ nullptr };
 };

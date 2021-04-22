@@ -4,10 +4,14 @@
 using namespace game;
 
 ScoreManager::ScoreManager(IObjectiveProvider* objectives,
-							ElementFactory* facory)
+							IElementFactory* facory)
 	:_objectives_provider_ref(objectives),
 	_factory_ref(facory)
-{}
+{
+	if (!_Init()) {
+		throw "invalid operation";
+	}
+}
 
 ScoreManager::~ScoreManager()
 {
@@ -20,7 +24,7 @@ ScoreManager::~ScoreManager()
 	}
 }
 
-bool ScoreManager::Init()
+bool ScoreManager::_Init()
 {
 	if (_factory_ref == nullptr || _objectives_provider_ref == nullptr) return false;
     
@@ -62,13 +66,25 @@ auto ScoreManager::UpdateMovesCount() -> bool
     return _moves_count == 0;
 }
 
+auto ScoreManager::CheckGameStatus() const -> STATUS
+{
+	if (_total_count <= 0 && _moves_count >= 0) {
+		return STATUS::Won;
+	}
+	else if (_total_count > 0 && _moves_count <= 0) {
+		return STATUS::Lose;
+	}
+	else {
+		return STATUS::Game;
+	}
+}
+
 auto ScoreManager::_CreateText(const std::string& str, size_t size) const -> sf::Text
 {
     sf::Text text;
     text.setFont(_font);
     text.setString(str);
     text.setCharacterSize(size);
-//        auto tmp = text.getGlobalBounds();
     text.setFillColor(sf::Color::Black);
     text.setStyle(sf::Text::Bold);
     return text;
@@ -80,13 +96,21 @@ void ScoreManager::Draw(sf::RenderWindow& window)
 	const int step_number = 40;
 	auto c = _objectives.begin();
 	int counter = 1;
+
+	sf::RectangleShape rectangle;
+	rectangle.setSize(sf::Vector2f(window.getSize().x, 100));
+	rectangle.setFillColor(sf::Color{156,214,214,255});
+	rectangle.setPosition(0, 5);
+	
+	window.draw(rectangle);
+
 	while (c != _objectives.end())
 	{
 		Element* elem = c->second.second;
-		elem->SetPosition(counter * step, 10);
+		elem->SetPosition(counter * step, 20);
 		int value = c->second.first;
 		sf::Text text = _CreateText(std::to_string(value), 35);
-		text.setPosition(elem->GetRectPosition().left - step_number, elem->GetRectPosition().top + step_number / 4);
+		text.setPosition(elem->GetRectPosition().left - step_number, elem->GetRectPosition().top + step_number / 2);
 		window.draw(text);
 		window.draw(elem->GetSprite());
 		++counter;
@@ -94,6 +118,6 @@ void ScoreManager::Draw(sf::RenderWindow& window)
 	}
     
     sf::Text text = _CreateText(std::to_string(_moves_count), 50);
-    text.setPosition(650, 10);
+    text.setPosition(650, 20);
     window.draw(text);
 }

@@ -2,6 +2,7 @@
 #define _RESOURCE_DATA_PROVIDER_H_
 
 #include "Resource.h"
+#include "LoadStatus.h"
 
 namespace game
 {
@@ -9,7 +10,7 @@ namespace game
 	{
 		IResourceDataProvider() = default;
 		virtual ~IResourceDataProvider() = default;
-		virtual const Resource& Load(const std::string& path) = 0;
+		virtual LoadStatus Load(const std::string& path) = 0;
 
 		const std::vector<ElementInfo>& GetElements() const { 
 			if (_resource == nullptr) throw "invalid operation";
@@ -26,7 +27,7 @@ namespace game
 
 	struct JSONResourceDataProvider : public IResourceDataProvider
 	{
-		const Resource& Load(const std::string& path) override;
+		LoadStatus Load(const std::string& path) override;
 	};
 
 	//struct XMLConfigDataProvider : public IResourceDataProvider

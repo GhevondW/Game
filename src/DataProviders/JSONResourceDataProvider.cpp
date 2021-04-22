@@ -18,12 +18,12 @@ namespace game {
 	}
 
 
-	const Resource& JSONResourceDataProvider::Load(const std::string& path)
+	LoadStatus JSONResourceDataProvider::Load(const std::string& path)
 	{
 		using namespace nlohmann;
 
-		if (_resource) return *_resource;
-
+		//if (_resource) return *_resource;
+		LoadStatus status = LoadStatus::OK;
 		_resource = std::make_unique<Resource>();
 		std::ifstream file{ path };
 
@@ -40,8 +40,11 @@ namespace game {
 			_resource->tiles.resize(t.size());
 			std::copy(t.begin(), t.end(), _resource->tiles.begin());
 		}
+		else {
+			status = LoadStatus::FileNotFound;
+		}
 
 		file.close();
-		return *_resource;
+		return status;
 	}
 }

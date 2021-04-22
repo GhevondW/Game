@@ -104,7 +104,17 @@ namespace game
 		sf::Sprite		_sprite{};
 	};
 
-	class ElementFactory
+	struct IElementFactory
+	{
+		IElementFactory() = default;
+		virtual ~IElementFactory() = default;
+		virtual Element::TYPE GetElemTypeByCode(const std::string& code) = 0;
+		virtual Element* CreateElement(Element::TYPE type) = 0;
+		virtual Element* CreateRandomElement(size_t max_degree) = 0;
+		virtual Tile* CreateTile(Tile::TYPE type) = 0;
+	};
+
+	class ElementFactory : public IElementFactory
 	{
 	public:
 		ElementFactory(std::shared_ptr<IResourceDataProvider> dp)

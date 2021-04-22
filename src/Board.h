@@ -7,17 +7,17 @@
 #include <SFML/Graphics.hpp>
 #include "Models/Kernel.h"
 #include "ScoreManager.h"
+#include "IDrawable.h"
 
 namespace game
 {
 
-    struct IBoard
+    struct IBoard : public IDrawable
     {
         IBoard() = default;
         virtual ~IBoard() = default;
         
         virtual bool Init() = 0;
-        virtual void Draw(sf::RenderWindow& window) = 0;
         virtual void HandleClick(sf::Event click) = 0;
     };
 
@@ -25,10 +25,11 @@ namespace game
 	{
 	public:
 		Board(std::shared_ptr<IConfigDataProvider>,
-			std::shared_ptr<IResourceDataProvider>,
+			std::shared_ptr<IElementFactory>,
+			std::shared_ptr<IScoreController>,
 			std::shared_ptr<KernelProvider>,
-			int x = 0,
-			int y = 0);
+			int window_width = 0,
+			int window_height = 0);
 		~Board();
 
 		bool Init();
@@ -38,7 +39,6 @@ namespace game
 	private:
 
 		auto _Dealloc() -> void;
-		auto _DrawClickInfo(sf::RenderWindow& window) -> void;
 		auto _GetElementPosition(sf::Vector2i coord) -> sf::Vector2i;
 		auto _ResetCoords() -> void;
 		auto _CheckMoveCoords() -> bool;
@@ -56,21 +56,17 @@ namespace game
 
 	private:
 		std::shared_ptr<IConfigDataProvider>	_config_dp{nullptr};
-		std::shared_ptr<IResourceDataProvider>	_resource_dp{nullptr};
-		std::unique_ptr<ElementFactory>			_factory{nullptr};
-		std::unique_ptr<ScoreManager>			_score_manager{ nullptr };
+		std::shared_ptr<IElementFactory>		_factory{nullptr};
+		std::shared_ptr<IScoreController>		_score_controller{ nullptr };
 		std::shared_ptr<KernelProvider>			_kernels{nullptr};
 
 		Matrix<Tile*>			                _tiles{};
         Matrix<Element*>		                _board{};
 
-		int										_top_left_x{};
-		int										_top_left_y{};
+		const int								_window_width;
+		const int								_window_height;
 		sf::IntRect								_board_rect{};
 		
-		//CODE FOR TESTING
-		//bool									_in{false};
-		//sf::Vector2i							_position{ -1, -1 };
 		sf::Vector2i							_position_c{ -1, -1 };
 		sf::Vector2i							_position_n{ -1, -1 };
 	};

@@ -7,19 +7,21 @@
 using namespace game;
 
 Board::Board(std::shared_ptr<IConfigDataProvider> config,
-	std::shared_ptr<IResourceDataProvider> resource,
+	std::shared_ptr<IElementFactory> factory,
+	std::shared_ptr<IScoreController> score_controller,
 	std::shared_ptr<KernelProvider> kernels,
-	int x, int y)
+	int window_width,
+	int window_height)
 	:_config_dp(config),
-	_resource_dp(resource),
+	_factory(factory),
+	_score_controller(score_controller),
 	_kernels(kernels),
-	_top_left_x(x),
-	_top_left_y(y)
+	_window_width(window_width),
+	_window_height(window_height)
 {}
 
 bool Board::Init()
 {
-	_factory = std::make_unique<ElementFactory>(_resource_dp);
 	_Dealloc();
 
 	int rows = _config_dp->GetRow();
@@ -31,10 +33,17 @@ bool Board::Init()
 	_tiles.resize(rows);
 	_board.resize(rows);
 
-	_board_rect.left = _top_left_x;
-	_board_rect.top = _top_left_y;
 	_board_rect.width = cols * TILE_SIZE;
 	_board_rect.height = rows * TILE_SIZE;
+
+	int ow = _window_width;
+	int oh = _window_height;
+	int cw = _board_rect.width;
+	int ch = _board_rect.height;
+	if (cw < ow && ch < oh) {
+		_board_rect.left = (ow - cw) / 2;
+		_board_rect.top = (oh - ch) / 2;
+	}
 
     auto tokens = _Split(config_string, "-");
     
@@ -58,8 +67,9 @@ bool Board::Init()
 		}
 	}
 
-	_score_manager = std::make_unique<ScoreManager>(_config_dp.get(), _factory.get());
-	return _score_manager->Init();
+	//_score_manager = std::make_unique<ScoreManager>(_config_dp.get(), _factory.get());
+	//return _score_manager->Init();
+	return _score_controller != nullptr;
 }
 
 void Board::HandleClick(sf::Event click)
@@ -68,7 +78,6 @@ void Board::HandleClick(sf::Event click)
 	{
         int x = click.mouseButton.x;
         int y = click.mouseButton.y;
-        //_in = _board_rect.contains({_x, _y});
         auto position = _GetElementPosition({x, y});
         bool result = false;
 		if (click.mouseButton.button == sf::Mouse::Left)
@@ -78,11 +87,6 @@ void Board::HandleClick(sf::Event click)
         else if(click.mouseButton.button == sf::Mouse::Right){
             result = _HandleBombClick(position);
         }
-        
-//        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-//        if(result){
-//            _GenerateNewElements();
-//        }
 	}
 }
 
@@ -108,7 +112,7 @@ auto Board::_HandleBombClick(sf::Vector2i position) -> bool
 		}
 
 		if (do_move) {
-			_score_manager->UpdateMovesCount();
+			_score_controller->UpdateMovesCount();
 			_SortColumn();
             _GenerateNewElements();
 //			_CheckBoard();
@@ -150,8 +154,7 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> bool
 				_ResetCoords();
 			}
 			else {
-				//TODO if
-				_score_manager->UpdateMovesCount();
+				_score_controller->UpdateMovesCount();
                 return true;
 			}
 		}
@@ -214,15 +217,10 @@ auto Board::_GenerateNewElements() -> void
                 delete _board[y][x];
                 _board[y][x] = nullptr;
                 Element* res = _factory->CreateRandomElement(max - 1);
-                if(res->GetType() == Element::TYPE::EMPTY) {
-                    bool b = false;
-                    std::cout<<"asd"<<std::endl;
-                }
                 _board[y][x] = res;
             }
         }
     }
-    
     _CheckBoard();
 }
 
@@ -235,11 +233,14 @@ auto Board::_IsElementBomb(sf::Vector2i point) -> bool
 
 void Board::Draw(sf::RenderWindow& window)
 {
-	const int top_x = _board_rect.left;
-	const int top_y = _board_rect.top;
+	auto size = window.getSize();
+
+	int top_x = _board_rect.left;
+	int top_y = _board_rect.top;
 
 	int rows = _config_dp->GetRow();
 	int cols = _config_dp->GetColumn();
+
 	for (size_t y = 0; y < rows; y++)
 	{
 		for (size_t x = 0; x < cols; x++)
@@ -254,35 +255,32 @@ void Board::Draw(sf::RenderWindow& window)
 			}
 		}
 	}
-	_DrawClickInfo(window);
-
-	_score_manager->Draw(window);
 }
 
-void Board::_DrawClickInfo(sf::RenderWindow& window)
-{
-	sf::Font MyFont;
-	std::string path = R_PATH;
-	if (!MyFont.loadFromFile(path + "font.ttf"))
-	{
-		// Error...
-	}
-	sf::Text text;
-	text.setFont(MyFont);
-	text.setString(/*"x:" + std::to_string(_position.x) +
-		", y:" + std::to_string(_position.y) +
-		", Status:" + std::to_string(_position.x != -1) + */
-		", x_c:" + std::to_string(_position_c.x) +
-		", y_c:" + std::to_string(_position_c.y) + 
-		", x_n:" + std::to_string(_position_n.x) + 
-		", y_n:" + std::to_string(_position_n.y));
-
-	text.setCharacterSize(24);
-	text.setFillColor(sf::Color::Black);
-	text.setStyle(sf::Text::Bold);
-	text.setPosition({ 50,100 });
-	window.draw(text);
-}
+//void Board::_DrawClickInfo(sf::RenderWindow& window)
+//{
+//	sf::Font MyFont;
+//	std::string path = R_PATH;
+//	if (!MyFont.loadFromFile(path + "font.ttf"))
+//	{
+//		// Error...
+//	}
+//	sf::Text text;
+//	text.setFont(MyFont);
+//	text.setString(/*"x:" + std::to_string(_position.x) +
+//		", y:" + std::to_string(_position.y) +
+//		", Status:" + std::to_string(_position.x != -1) + */
+//		", x_c:" + std::to_string(_position_c.x) +
+//		", y_c:" + std::to_string(_position_c.y) + 
+//		", x_n:" + std::to_string(_position_n.x) + 
+//		", y_n:" + std::to_string(_position_n.y));
+//
+//	text.setCharacterSize(24);
+//	text.setFillColor(sf::Color::Black);
+//	text.setStyle(sf::Text::Bold);
+//	text.setPosition({ 50,100 });
+//	window.draw(text);
+//}
 
 auto Board::_GetElementPosition(sf::Vector2i coord) -> sf::Vector2i
 {
@@ -320,7 +318,7 @@ auto Board::_RemoveRow(size_t y) -> void
 		for (int x = 0; x < _config_dp->GetColumn(); x++)
 		{
             auto type = _board[y][x]->GetType();
-            _score_manager->UpdateScore(type, 1);
+            _score_controller->UpdateScore(type, 1);
             
 			delete _board[y][x];
 			_board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
@@ -335,7 +333,7 @@ auto Board::_RemoveColumn(size_t x) -> void
 		for (int y = 0; y < _config_dp->GetRow(); y++)
 		{
             auto type = _board[y][x]->GetType();
-            _score_manager->UpdateScore(type, 1);
+			_score_controller->UpdateScore(type, 1);
             
 			delete _board[y][x];
             _board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
@@ -353,7 +351,7 @@ auto Board::_RemoveRect(sf::Vector2i center) -> void
         for (int y = begin_y; y <= end_y; y++) {
             for (int x = begin_x; x <= end_x; x++) {
                 auto type = _board[y][x]->GetType();
-                _score_manager->UpdateScore(type, 1);
+				_score_controller->UpdateScore(type, 1);
                 
                 delete _board[y][x];
                 _board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
@@ -384,14 +382,14 @@ auto Board::_CheckBoard() -> bool
                 
                 if(type == Element::TYPE::EMPTY) continue;
                 
-                std::vector<std::pair<int, int>> same{};
+                std::set<std::pair<int, int>> same{};
                 bool result = false;
                 
                 if(y + kernel_row - 1 < rows && x + kernel_cols - 1 < cols){
                     for (int ky = 0; ky < kernel_row; ++ky) {
                         for (int kx = 0; kx < kernel_cols; ++kx) {
                             if(kernel.At(ky, kx) == 1 && _board[y + ky][x + kx]->GetType() == type){
-                                same.push_back({y + ky, x + kx});
+                                same.insert({y + ky, x + kx});
                             }
                         }
                     }
@@ -400,17 +398,23 @@ auto Board::_CheckBoard() -> bool
                 
                 if(result){
                     move_status = true;
-                    int c = 0;
-                    _score_manager->UpdateScore(type, kernel.GetRank());
-                    for (auto iter : same) {
-                        delete _board[iter.first][iter.second];
-                        Element::TYPE res_type = Element::TYPE::EMPTY;
-                        if(kernel.GetRewardType() != Element::TYPE::EMPTY && c == same.size() / 2){
-                            res_type = kernel.GetRewardType();
-                        }
-                        _board[iter.first][iter.second] = _factory->CreateElement(res_type);
-                        ++c;
-                    }
+                    //int c = 0;
+					_score_controller->UpdateScore(type, kernel.GetRank());
+					auto iter = same.find({ _position_c.y, _position_c.x });
+					iter = iter == end(same) ? same.find({ _position_n.y, _position_n.x }) : iter;
+					iter = iter == end(same) ? iter = begin(same) : iter;
+
+					auto c = begin(same);
+					while (c != end(same))
+					{
+						delete _board[c->first][c->second];
+						Element::TYPE res_type = Element::TYPE::EMPTY;
+						if(kernel.GetRewardType() != Element::TYPE::EMPTY && c == iter){
+							res_type = kernel.GetRewardType();
+						}
+						_board[c->first][c->second] = _factory->CreateElement(res_type);
+						++c;
+					}
                 }
                 
             }
@@ -422,7 +426,6 @@ auto Board::_CheckBoard() -> bool
     if(move_status)
     {
 		_SortColumn();
-//		_CheckBoard();
         _GenerateNewElements();
     }
     
