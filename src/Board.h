@@ -52,7 +52,7 @@ namespace game
 		auto _HandleColorClick(sf::Vector2i position) -> bool;
 		auto _SortColumn() -> void;
         auto _GenerateNewElements() -> void;
-        auto _IsElementBomb(sf::Vector2i point) -> bool;
+        auto _IsElementBomb(sf::Vector2i point) const -> bool;
 
 	private:
 		std::shared_ptr<IConfigDataProvider>	_config_dp{nullptr};

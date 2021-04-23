@@ -126,6 +126,12 @@ auto Board::_HandleBombClick(sf::Vector2i position) -> bool
 auto Board::_HandleColorClick(sf::Vector2i position) -> bool
 {
 	if (position.x != -1 && position.y != -1) {
+        if(_IsElementBomb(position))
+        {
+            _ResetCoords();
+            return false;
+        }
+        
 		if (_position_c.x == -1 || (_position_c.x != -1 && _position_n.x != -1)) {
 			_position_c = position;
 			_position_n = { -1, -1 };
@@ -231,7 +237,7 @@ auto Board::_GenerateNewElements() -> void
     _CheckBoard();
 }
 
-auto Board::_IsElementBomb(sf::Vector2i point) -> bool
+auto Board::_IsElementBomb(sf::Vector2i point) const -> bool
 {
     return _board[point.y][point.x]->GetType() == Element::TYPE::BOMB ||
     _board[point.y][point.x]->GetType() == Element::TYPE::VBOMB ||
