@@ -132,6 +132,9 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> bool
 		}
 		else if (_position_n.x == -1) {
 			_position_n = position;
+            if(_position_n == _position_c){
+                _ResetCoords();
+            }
 		}
 	}
 	else {
