@@ -67,7 +67,10 @@ namespace game
 		enum TYPE
 		{
 			ONE = 0,
-			TWO = 1
+			TWO = 1,
+            ONE_S = 2,
+            TWO_S = 3,
+            EMPTY = 4
 		};
 
 		Tile() = default;
@@ -94,6 +97,10 @@ namespace game
 				_sprite.setPosition(position.left + dw, position.top + dh);
 			}
 		}
+        void SetTexture(const sf::Texture& ref)
+        {
+            _sprite.setTexture(ref);
+        }
 
 		TYPE GetType() const { return _type; }
 		const std::string& GetCode() const { return _code; }
@@ -112,6 +119,9 @@ namespace game
 		virtual Element* CreateElement(Element::TYPE type) = 0;
 		virtual Element* CreateRandomElement(size_t max_degree) = 0;
 		virtual Tile* CreateTile(Tile::TYPE type) = 0;
+        virtual const sf::Texture& GetTextureElement(Element::TYPE type) = 0;
+        virtual const sf::Texture& GetTextureTile(Tile::TYPE type) = 0;
+        virtual const sf::Texture& GetTextureSelectedTile(Tile::TYPE type) = 0;
 	};
 
 	class ElementFactory : public IElementFactory
@@ -142,7 +152,7 @@ namespace game
 		Element* CreateElement(Element::TYPE type)
 		{
 			if (_resource_dp == nullptr) return nullptr;
-			return new Element(type, _GetTexture(type));
+			return new Element(type, GetTextureElement(type));
 		}
         
         Element* CreateRandomElement(size_t max_degree)
@@ -150,7 +160,7 @@ namespace game
             if (_resource_dp == nullptr || max_degree > 4) return nullptr;
             size_t rand = std::rand() % max_degree;
             Element::TYPE type = (Element::TYPE)rand;
-            return new Element(type, _GetTexture(type));
+            return new Element(type, GetTextureElement(type));
         }
 
 		Tile* CreateTile(Tile::TYPE type)
@@ -171,9 +181,9 @@ namespace game
 			return new Tile(type, info.code, _tile_texture_cache.at(type));
 		}
 
-    private:
+    public:
         
-        sf::Texture& _GetTexture(Element::TYPE type)
+        const sf::Texture& GetTextureElement(Element::TYPE type)
         {
             if (_elem_texture_cache.count(type) == 0) {
                 _elem_texture_cache.insert({ type, sf::Texture{} });
@@ -189,6 +199,29 @@ namespace game
             }
             
             return _elem_texture_cache[type];
+        }
+        
+        const sf::Texture& GetTextureTile(Tile::TYPE type)
+        {
+            if (_tile_texture_cache.count(type) == 0) {
+                _tile_texture_cache.insert({ type, sf::Texture{} });
+            }
+
+            if (type != Tile::TYPE::EMPTY) {
+                const auto& ref = _resource_dp->GetTiles();
+                const TileInfo& info = ref[(int)type];
+                std::string path = R_PATH;
+                path += info.image_path;
+
+                _tile_texture_cache[type].loadFromFile(path);
+            }
+            
+            return _tile_texture_cache[type];
+        }
+        
+        const sf::Texture& GetTextureSelectedTile(Tile::TYPE type)
+        {
+            return GetTextureTile(Tile::TYPE((int)type + 2));
         }
         
 	public:

@@ -1,20 +1,20 @@
 {
   "row": 7,
   "column": 6,
-  "moves_count": 20,
+  "moves_count": 15,
   "fig_colors_count": 5,
   "objectives": [
     {
       "code": "v",
-      "count": 5
+      "count": 6
     },
     {
       "code": "b",
-      "count": 15
+      "count": 20
     },
     {
       "code": "r",
-      "count": 20
+      "count": 25
     }
   ],
   "board": "r-o-g-b-v-o-v-g-o-v-b-g-r-v-b-b-o-g-g-b-v-b-b-o-r-o-r-r-b-r-v-b-g-b-v-o-g-b-o-v-o-g"

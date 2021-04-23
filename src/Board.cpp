@@ -115,6 +115,7 @@ auto Board::_HandleBombClick(sf::Vector2i position) -> bool
 			_score_controller->UpdateMovesCount();
 			_SortColumn();
             _GenerateNewElements();
+            _ResetCoords();
 //			_CheckBoard();
 		}
         
@@ -155,6 +156,7 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> bool
 			}
 			else {
 				_score_controller->UpdateMovesCount();
+                _ResetCoords();
                 return true;
 			}
 		}
@@ -245,6 +247,14 @@ void Board::Draw(sf::RenderWindow& window)
 	{
 		for (size_t x = 0; x < cols; x++)
 		{
+            if(_position_c.x == x && _position_c.y == y){
+                _tiles[y][x]->SetTexture(_factory->GetTextureSelectedTile(_tiles[y][x]->GetType()));
+            }
+
+            if(_position_c.x == -1 && _position_c.y == -1){
+                _tiles[y][x]->SetTexture(_factory->GetTextureTile(_tiles[y][x]->GetType()));
+            }
+            
 			int xPos = top_x + x * TILE_SIZE;
 			int yPos = top_y + y * TILE_SIZE;
 			_tiles[y][x]->SetPosition(xPos, yPos);
@@ -294,6 +304,10 @@ auto Board::_GetElementPosition(sf::Vector2i coord) -> sf::Vector2i
 
 auto Board::_ResetCoords() -> void
 {
+//    if(_position_c.x != -1 && _position_c.y != 1){
+//        auto type = _tiles[_position_c.y][_position_c.x]->GetType();
+//        _tiles[_position_c.y][_position_c.x]->SetTexture(_factory->GetTextureSelectedTile(type));
+//    }
 	_position_c = { -1 , -1};
 	_position_n = { -1 , -1};
 }
