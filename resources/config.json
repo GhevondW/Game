@@ -6,15 +6,15 @@
   "objectives": [
     {
       "code": "v",
-      "count": 6
+      "count": 1
     },
     {
       "code": "b",
-      "count": 20
+      "count": 250
     },
     {
       "code": "r",
-      "count": 25
+      "count": 200
     }
   ],
   "board": "r-o-g-b-v-o-v-g-o-v-b-g-r-v-b-b-o-g-g-b-v-b-b-o-r-o-r-r-b-r-v-b-g-b-v-o-g-b-o-v-o-g"

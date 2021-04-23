@@ -144,7 +144,6 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> bool
 
 	if (_position_c.x != -1 && _position_c.y != -1 && _position_n.x != -1 && _position_n.y != -1) {
 		if (_CheckMoveCoords()) {
-            
             if(_IsElementBomb(_position_c) && _IsElementBomb(_position_n))
             {
                 _ResetCoords();
@@ -163,6 +162,9 @@ auto Board::_HandleColorClick(sf::Vector2i position) -> bool
                 return true;
 			}
 		}
+        else{
+            _ResetCoords();
+        }
 	}
     
     return false;

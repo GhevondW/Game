@@ -95,7 +95,7 @@ void ScoreManager::Draw(sf::RenderWindow& window)
 	const int step = 150;
 	const int step_number = 40;
 	auto c = _objectives.begin();
-	int counter = 1;
+	int counter = 0;
 
 	sf::RectangleShape rectangle;
 	rectangle.setSize(sf::Vector2f(window.getSize().x, 100));
@@ -107,10 +107,12 @@ void ScoreManager::Draw(sf::RenderWindow& window)
 	while (c != _objectives.end())
 	{
 		Element* elem = c->second.second;
-		elem->SetPosition(counter * step, 20);
+		elem->SetPosition(100 + counter * step, 20);
+        auto rect = elem->GetRectPosition();
 		int value = c->second.first;
 		sf::Text text = _CreateText(std::to_string(value), 35);
-		text.setPosition(elem->GetRectPosition().left - step_number, elem->GetRectPosition().top + step_number / 2);
+        auto textRect = text.getGlobalBounds();
+		text.setPosition(rect.left - textRect.width - 10, rect.top + rect.height/4 - textRect.height/4);
 		window.draw(text);
 		window.draw(elem->GetSprite());
 		++counter;
