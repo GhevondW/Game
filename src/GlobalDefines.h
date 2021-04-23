@@ -3,7 +3,12 @@
 
 #include <vector>
 
-#define R_PATH "resources/"
+#ifdef __APPLE__
+    #define R_PATH "../resources/"
+#else
+    #define R_PATH "resources/"
+#endif
+
 #define TILE_SIZE 87
 
 template<class T>

@@ -25,11 +25,11 @@ void GameController::UpdateGameStatus(GameStatus status) {
 }
 
 void GameController::StartGame() {
-    UpdateGameStatus(GameStatus::Started);
+    UpdateGameStatus(GameStatus::Ok);
 
     if (_config_dp == nullptr || _resource_dp == nullptr || _kernels == nullptr || _factory == nullptr || _score_manager == nullptr) 
     {
-        UpdateGameStatus(GameStatus::LoadInitialDataFailed);
+        UpdateGameStatus(GameStatus::Failed);
     }
     
     _app = new RenderWindow(VideoMode(750, 950), "Game", Style::Close);
@@ -53,8 +53,6 @@ void GameController::_Run() {
     while (_app->isOpen()) {
         _app->clear(Color(204, 255, 204, 255));
 
-        _status = _score_manager->CheckGameStatus();
-
         _Draw();
 
         sf::Event event;
@@ -64,7 +62,8 @@ void GameController::_Run() {
                 _app->close();
             }
             else {
-                if (_status == IScoreController::STATUS::Game) {
+                if (_status == IScoreController::STATUS::Game &&
+                    _gameStatus == GameStatus::Ok) {
                     _board->HandleClick(event);
                 }
             }
@@ -75,17 +74,24 @@ void GameController::_Run() {
 
 void GameController::_Draw()
 {
-    if (_status == IScoreController::STATUS::Won) {
-        AlertMessage msg{ "You Win!" };
-        msg.Draw(*_app);
+    if(_gameStatus == GameStatus::Ok){
+        _status = _score_manager->CheckGameStatus();
+        if (_status == IScoreController::STATUS::Won) {
+            AlertMessage msg{ "You Win!" };
+            msg.Draw(*_app);
+        }
+        else if (_status == IScoreController::STATUS::Lose) {
+            AlertMessage msg{ "You Lose!" };
+            msg.Draw(*_app);
+        }
+        else {
+            _board->Draw(*_app);
+            _score_manager->Draw(*_app);
+        }
     }
-    else if (_status == IScoreController::STATUS::Lose) {
-        AlertMessage msg{ "You Lose!" };
+    else{
+        AlertMessage msg{ "Initial Data Loading Failed" };
         msg.Draw(*_app);
-    }
-    else {
-        _board->Draw(*_app);
-        _score_manager->Draw(*_app);
     }
 }
 

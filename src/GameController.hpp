@@ -13,11 +13,8 @@
 using namespace sf;
 
 enum GameStatus {
-    NotStarted,
-    Started,
-    Won,
     Failed,
-    LoadInitialDataFailed
+    Ok
 };
 
 class GameController {
@@ -35,7 +32,7 @@ private:
     void _Draw();
 
 private:
-    GameStatus                                      _gameStatus = NotStarted;
+    GameStatus                                      _gameStatus = Ok;
     game::IScoreController::STATUS                  _status = game::IScoreController::STATUS::Game;
     RenderWindow*                                   _app{nullptr};
         
