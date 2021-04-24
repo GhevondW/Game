@@ -23,4 +23,11 @@ using IntMatrix = Matrix<int>;
 #define MAX(a, b) (((a)>(b))?(a):(b))
 #endif  /* MAX */
 
+#ifndef ABS
+#define ABS(N) ((N<0)?(-N):(N))
+#endif // !ABS
+
+#define MOVE_FACTOR 20
+#define DELAY_TIME 10
+
 #endif // !_GLOBAL_DEFINES_H_

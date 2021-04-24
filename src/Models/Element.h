@@ -52,6 +52,8 @@ namespace game
 			}
 		}
 		TYPE GetType() const { return _type; }
+		void SetPosition(const sf::Vector2f pos) { _sprite.setPosition(pos); }
+		sf::Vector2f GetPosition() const { return _sprite.getPosition(); }
 //		const std::string& GetCode() const { return _code; }
 
 	private:

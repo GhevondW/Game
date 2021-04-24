@@ -8,6 +8,7 @@
 #include "Models/Kernel.h"
 #include "ScoreManager.h"
 #include "IDrawable.h"
+#include "AnimationController.h"
 
 namespace game
 {
@@ -53,12 +54,15 @@ namespace game
 		auto _SortColumn() -> void;
         auto _GenerateNewElements() -> void;
         auto _IsElementBomb(sf::Vector2i point) const -> bool;
+		auto _IsElementEmpty(sf::Vector2i point) const -> bool;
+		auto _GetPositionInTile(const Element* elem, const Tile* tile) -> sf::Vector2f;
 
 	private:
 		std::shared_ptr<IConfigDataProvider>	_config_dp{nullptr};
 		std::shared_ptr<IElementFactory>		_factory{nullptr};
 		std::shared_ptr<IScoreController>		_score_controller{ nullptr };
 		std::shared_ptr<KernelProvider>			_kernels{nullptr};
+		std::shared_ptr<AnimationController>	_animations{nullptr};
 
 		Matrix<Tile*>			                _tiles{};
         Matrix<Element*>		                _board{};

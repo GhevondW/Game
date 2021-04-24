@@ -17,7 +17,8 @@ Board::Board(std::shared_ptr<IConfigDataProvider> config,
 	_score_controller(score_controller),
 	_kernels(kernels),
 	_window_width(window_width),
-	_window_height(window_height)
+	_window_height(window_height),
+	_animations(std::make_shared<AnimationController>(DELAY_TIME))
 {}
 
 bool Board::Init()
@@ -49,6 +50,11 @@ bool Board::Init()
     
     if(tokens.size() < rows * cols) return false;
     
+	int top_x = _board_rect.left;
+	int top_y = _board_rect.top;
+
+	_animations->AddGroup();
+
 	for (size_t y = 0; y < rows; y++)
 	{
 		int row_begin_color = y % 2;
@@ -56,24 +62,33 @@ bool Board::Init()
 		_board[y].resize(cols);
 		for (size_t x = 0; x < cols; x++)
 		{
+
+			int xPos = top_x + x * TILE_SIZE;
+			int yPos = top_y + y * TILE_SIZE;
+
 			int color = (x % 2);
 			color = row_begin_color ? row_begin_color - color : color;
 			_tiles[y][x] = _factory->CreateTile(Tile::TYPE(color));
+			_tiles[y][x]->SetPosition(xPos, yPos);
 
 
 			int str_index = y * cols + x;
 			auto type = _factory->GetElemTypeByCode(tokens[str_index]);
 			_board[y][x] = _factory->CreateElement(type);
+			_board[y][x]->SetCenterOfRect(_tiles[y][x]->GetRectPosition());
+
+			_animations->AddCommand(ICommand(new ShowElementCommand(*_board[y][x], MOVE_FACTOR)));
 		}
 	}
 
-	//_score_manager = std::make_unique<ScoreManager>(_config_dp.get(), _factory.get());
-	//return _score_manager->Init();
+	_animations->CheckLastGroup();
+
 	return _score_controller != nullptr;
 }
 
 void Board::HandleClick(sf::Event click)
 {
+	if (!_animations->Empty()) return;
 	if (click.type == sf::Event::MouseButtonPressed)
 	{
         int x = click.mouseButton.x;
@@ -87,7 +102,64 @@ void Board::HandleClick(sf::Event click)
         else if(click.mouseButton.button == sf::Mouse::Right){
             result = _HandleBombClick(position);
         }
+
+		if (result) {
+			_GenerateNewElements();
+		}
 	}
+}
+
+auto Board::_HandleColorClick(sf::Vector2i position) -> bool
+{
+	if (position.x != -1 && position.y != -1) {
+		if (_IsElementBomb(position) || _IsElementEmpty(position))
+		{
+			_ResetCoords();
+			return false;
+		}
+
+		if (_position_c.x == -1 || (_position_c.x != -1 && _position_n.x != -1)) {
+			_position_c = position;
+			_position_n = { -1, -1 };
+		}
+		else if (_position_n.x == -1) {
+			_position_n = position;
+			if (_position_n == _position_c) {
+				_ResetCoords();
+			}
+		}
+	}
+	else {
+		_ResetCoords();
+		return false;
+	}
+
+	if (_position_c.x != -1 && _position_c.y != -1 && _position_n.x != -1 && _position_n.y != -1) {
+		if (_CheckMoveCoords()) {
+			if (_IsElementBomb(_position_c) && _IsElementBomb(_position_n))
+			{
+				_ResetCoords();
+				return false;
+			}
+
+			_Move();
+			if (!_CheckBoard())
+			{
+				_Move();
+				_ResetCoords();
+			}
+			else {
+				_score_controller->UpdateMovesCount();
+				_ResetCoords();
+				return true;
+			}
+		}
+		else {
+			_ResetCoords();
+		}
+	}
+
+	return false;
 }
 
 auto Board::_HandleBombClick(sf::Vector2i position) -> bool
@@ -111,69 +183,16 @@ auto Board::_HandleBombClick(sf::Vector2i position) -> bool
 			do_move = true;
 		}
 
-		if (do_move) {
-			_score_controller->UpdateMovesCount();
-			_SortColumn();
-            _GenerateNewElements();
-            _ResetCoords();
-//			_CheckBoard();
-		}
+		//if (do_move) {
+		//	_score_controller->UpdateMovesCount();
+		//	_SortColumn();
+		//	//_CheckBoard();
+  //          //_GenerateNewElements();
+  //          _ResetCoords();
+		//}
         
         return do_move;
 	}
-}
-
-auto Board::_HandleColorClick(sf::Vector2i position) -> bool
-{
-	if (position.x != -1 && position.y != -1) {
-        if(_IsElementBomb(position))
-        {
-            _ResetCoords();
-            return false;
-        }
-        
-		if (_position_c.x == -1 || (_position_c.x != -1 && _position_n.x != -1)) {
-			_position_c = position;
-			_position_n = { -1, -1 };
-		}
-		else if (_position_n.x == -1) {
-			_position_n = position;
-            if(_position_n == _position_c){
-                _ResetCoords();
-            }
-		}
-	}
-	else {
-		_ResetCoords();
-        return false;
-	}
-
-	if (_position_c.x != -1 && _position_c.y != -1 && _position_n.x != -1 && _position_n.y != -1) {
-		if (_CheckMoveCoords()) {
-            if(_IsElementBomb(_position_c) && _IsElementBomb(_position_n))
-            {
-                _ResetCoords();
-                return false;
-            }
-            
-			_Move();
-			if (!_CheckBoard())
-			{
-				_Move();
-				_ResetCoords();
-			}
-			else {
-				_score_controller->UpdateMovesCount();
-                _ResetCoords();
-                return true;
-			}
-		}
-        else{
-            _ResetCoords();
-        }
-	}
-    
-    return false;
 }
 
 auto Board::_SortColumn() -> void
@@ -186,20 +205,27 @@ auto Board::_SortColumn() -> void
 		for (int xPos = begin_x; xPos < end_x; xPos++)
 		{
 			if (xPos < cols) {
-
-				int max_empty_y = rows;
-				bool swapped = false;
-
 				for (int y = rows - 1; y >= 0; --y)
 				{
 					if (_board[y][xPos]->GetType() != Element::TYPE::EMPTY) {
+						int y_initial = y;
+						int x_initial = xPos;
+
 						int y_step = y;
 						while (y_step + 1 < rows && _board[y_step + 1][xPos]->GetType() == Element::TYPE::EMPTY)
 						{
 							Element* tmp = _board[y_step][xPos];
 							_board[y_step][xPos] = _board[y_step + 1][xPos];
 							_board[y_step + 1][xPos] = tmp;
+							//_board[y_step + 1][xPos]->SetCenterOfRect(_tiles[y_step + 1][xPos]->GetRectPosition());
 							++y_step;
+						}
+
+						if (y_step > y_initial && y_step < rows) {
+							Tile* tile = _tiles[y_step][xPos];
+							Element* elem = _board[y_step][xPos];
+							auto new_pos = _GetPositionInTile(elem, tile);
+							_animations->AddCommand(ICommand(new ElementMoveCommand(*elem, new_pos, MOVE_FACTOR)));
 						}
 					}
 				}
@@ -207,7 +233,9 @@ auto Board::_SortColumn() -> void
 		}
 	};
 
-	if (cols < 4) {
+	_animations->AddGroup();
+
+	if (/*cols < 4*/ true) {
 		Task(0, cols);
 	}
 	else {
@@ -217,24 +245,35 @@ auto Board::_SortColumn() -> void
 		t2.join();
 	}
 
+	_animations->CheckLastGroup();
+
 }
 
 auto Board::_GenerateNewElements() -> void
 {
+	_animations->AddGroup();
     const size_t rows = _config_dp->GetRow();
     const size_t cols = _config_dp->GetColumn();
     const size_t max = _config_dp->GetFigColorsCount();
+
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; ++x) {
             if(_board[y][x] && _board[y][x]->GetType() == Element::TYPE::EMPTY){
                 delete _board[y][x];
                 _board[y][x] = nullptr;
-                Element* res = _factory->CreateRandomElement(max - 1);
-                _board[y][x] = res;
+                _board[y][x] = _factory->CreateRandomElement(max - 1);;
+				_board[y][x]->SetCenterOfRect(_tiles[y][x]->GetRectPosition());
+
+				Element* elem = _board[y][x];
+				//Tile* tile = _tiles[y][x];
+
+				_animations->AddCommand(ICommand(new ShowElementCommand(*elem, MOVE_FACTOR)));
+
             }
         }
     }
-    _CheckBoard();
+	_animations->CheckLastGroup();
+    //_CheckBoard();
 }
 
 auto Board::_IsElementBomb(sf::Vector2i point) const -> bool
@@ -244,12 +283,17 @@ auto Board::_IsElementBomb(sf::Vector2i point) const -> bool
     _board[point.y][point.x]->GetType() == Element::TYPE::HBOMB;
 }
 
+auto Board::_IsElementEmpty(sf::Vector2i point) const -> bool
+{
+	return _board[point.y][point.x]->GetType() == Element::TYPE::EMPTY;
+}
+
 void Board::Draw(sf::RenderWindow& window)
 {
 	auto size = window.getSize();
 
-	int top_x = _board_rect.left;
-	int top_y = _board_rect.top;
+	//int top_x = _board_rect.left;
+	//int top_y = _board_rect.top;
 
 	int rows = _config_dp->GetRow();
 	int cols = _config_dp->GetColumn();
@@ -266,16 +310,19 @@ void Board::Draw(sf::RenderWindow& window)
                 _tiles[y][x]->SetTexture(_factory->GetTextureTile(_tiles[y][x]->GetType()));
             }
             
-			int xPos = top_x + x * TILE_SIZE;
-			int yPos = top_y + y * TILE_SIZE;
-			_tiles[y][x]->SetPosition(xPos, yPos);
+			//int xPos = top_x + x * TILE_SIZE;
+			//int yPos = top_y + y * TILE_SIZE;
+			//_tiles[y][x]->SetPosition(xPos, yPos);
 			window.draw(_tiles[y][x]->GetSprite());
 			if (_board[y][x]) {
-				_board[y][x]->SetCenterOfRect(_tiles[y][x]->GetRectPosition());
+				//_board[y][x]->SetCenterOfRect(_tiles[y][x]->GetRectPosition());
 				window.draw(_board[y][x]->GetSprite());
 			}
 		}
 	}
+
+	_animations->Excecute();
+
 }
 
 //void Board::_DrawClickInfo(sf::RenderWindow& window)
@@ -315,10 +362,6 @@ auto Board::_GetElementPosition(sf::Vector2i coord) -> sf::Vector2i
 
 auto Board::_ResetCoords() -> void
 {
-//    if(_position_c.x != -1 && _position_c.y != 1){
-//        auto type = _tiles[_position_c.y][_position_c.x]->GetType();
-//        _tiles[_position_c.y][_position_c.x]->SetTexture(_factory->GetTextureSelectedTile(type));
-//    }
 	_position_c = { -1 , -1};
 	_position_n = { -1 , -1};
 }
@@ -334,6 +377,12 @@ auto Board::_Move() -> void
 	auto* tmp = _board[_position_c.y][_position_c.x];
 	_board[_position_c.y][_position_c.x] = _board[_position_n.y][_position_n.x];
 	_board[_position_n.y][_position_n.x] = tmp;
+
+	//auto pos_n = _GetPositionInTile(_board[_position_n.y][_position_n.x], _tiles[_position_n.y][_position_n.x]);
+	//auto pos_c = _GetPositionInTile(_board[_position_c.y][_position_c.x], _tiles[_position_c.y][_position_c.x]);
+
+	_board[_position_c.y][_position_c.x]->SetCenterOfRect(_tiles[_position_c.y][_position_c.x]->GetRectPosition());
+	_board[_position_n.y][_position_n.x]->SetCenterOfRect(_tiles[_position_n.y][_position_n.x]->GetRectPosition());
 }
 
 auto Board::_RemoveRow(size_t y) -> void
@@ -349,6 +398,10 @@ auto Board::_RemoveRow(size_t y) -> void
 			_board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
 		}
 	}
+
+	_score_controller->UpdateMovesCount();
+	_SortColumn();
+	_ResetCoords();
 }
 
 auto Board::_RemoveColumn(size_t x) -> void
@@ -364,6 +417,10 @@ auto Board::_RemoveColumn(size_t x) -> void
             _board[y][x] = _factory->CreateElement(Element::TYPE::EMPTY);
 		}
 	}
+
+	_score_controller->UpdateMovesCount();
+	_SortColumn();
+	_ResetCoords();
 }
 
 auto Board::_RemoveRect(sf::Vector2i center) -> void
@@ -383,6 +440,10 @@ auto Board::_RemoveRect(sf::Vector2i center) -> void
             }
         }
     }
+
+	_score_controller->UpdateMovesCount();
+	_SortColumn();
+	_ResetCoords();
 }
 
 auto Board::_CheckBoard() -> bool
@@ -423,7 +484,6 @@ auto Board::_CheckBoard() -> bool
                 
                 if(result){
                     move_status = true;
-                    //int c = 0;
 					_score_controller->UpdateScore(type, kernel.GetRank());
 					auto iter = same.find({ _position_c.y, _position_c.x });
 					iter = iter == end(same) ? same.find({ _position_n.y, _position_n.x }) : iter;
@@ -438,6 +498,7 @@ auto Board::_CheckBoard() -> bool
 							res_type = kernel.GetRewardType();
 						}
 						_board[c->first][c->second] = _factory->CreateElement(res_type);
+						_board[c->first][c->second]->SetCenterOfRect(_tiles[c->first][c->second]->GetRectPosition());
 						++c;
 					}
                 }
@@ -451,7 +512,8 @@ auto Board::_CheckBoard() -> bool
     if(move_status)
     {
 		_SortColumn();
-        _GenerateNewElements();
+		//_CheckBoard();
+        //_GenerateNewElements();
     }
     
     return move_status;
@@ -489,6 +551,27 @@ void Board::_Dealloc()
 	}
 	_board.clear();
 	_tiles.clear();
+}
+
+auto Board::_GetPositionInTile(const Element* elem, const Tile* tile)->sf::Vector2f
+{
+	sf::Vector2f res;
+	if (elem == nullptr || tile == nullptr) return res;
+
+	auto current_rec = elem->GetRectPosition();
+	auto position = tile->GetRectPosition();
+	int cw = current_rec.width;
+	int ch = current_rec.height;
+	int ow = position.width;
+	int oh = position.height;
+	if (cw < ow && ch < oh) {
+		int dw = (ow - cw) / 2;
+		int dh = (oh - ch) / 2;
+		res.x = position.left + dw;
+		res.y = position.top + dh;
+	}
+
+	return res;
 }
 
 Board::~Board()
