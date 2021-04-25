@@ -88,7 +88,7 @@ bool Board::Init()
 
 void Board::HandleClick(sf::Event click)
 {
-	if (!_animations->Empty()) return;
+	if (!_animations->Empty() && _autoplay == false) return;
 	if (click.type == sf::Event::MouseButtonPressed)
 	{
         int x = click.mouseButton.x;
@@ -105,6 +105,18 @@ void Board::HandleClick(sf::Event click)
 
 		if (result) {
 			_GenerateNewElements();
+		}
+	}
+}
+
+void Board::Autoplay()
+{
+	if (_autoplay == true && _animations->Empty()) {
+		if (_CheckBoard()) {
+			_GenerateNewElements();
+		}
+		else {
+			_autoplay = false;
 		}
 	}
 }
@@ -268,7 +280,7 @@ auto Board::_GenerateNewElements() -> void
 				//Tile* tile = _tiles[y][x];
 
 				_animations->AddCommand(ICommand(new ShowElementCommand(*elem, MOVE_FACTOR)));
-
+				_autoplay = true;
             }
         }
     }

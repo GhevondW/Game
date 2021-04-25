@@ -55,6 +55,8 @@ void GameController::_Run() {
 
         _Draw();
 
+        _board->Autoplay();
+
         sf::Event event;
         while (_app->pollEvent(event)) {
             // "close requested" event: we close the window

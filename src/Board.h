@@ -20,6 +20,7 @@ namespace game
         
         virtual bool Init() = 0;
         virtual void HandleClick(sf::Event click) = 0;
+		virtual void Autoplay() = 0;
     };
 
 	class Board : public IBoard
@@ -36,6 +37,7 @@ namespace game
 		bool Init();
 		void Draw(sf::RenderWindow& window);
 		void HandleClick(sf::Event click);
+		void Autoplay() override;
 
 	private:
 
@@ -73,6 +75,8 @@ namespace game
 		
 		sf::Vector2i							_position_c{ -1, -1 };
 		sf::Vector2i							_position_n{ -1, -1 };
+
+		bool									_autoplay{false};
 	};
 }
 
