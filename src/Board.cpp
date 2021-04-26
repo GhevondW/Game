@@ -88,7 +88,7 @@ bool Board::Init()
 
 void Board::HandleClick(sf::Event click)
 {
-	if (!_animations->Empty() && _autoplay == true) return;
+	if (!_animations->Empty() || _autoplay == true) return;
 	if (click.type == sf::Event::MouseButtonPressed)
 	{
         int x = click.mouseButton.x;

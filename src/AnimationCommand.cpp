@@ -7,7 +7,7 @@ using namespace game;
 ElementFallCommand::ElementFallCommand(Element& ref, float y_move, size_t mf)
 	:_element_ref(ref),
 	_y_move(y_move),
-	_move_factor(mf) 
+	_move_factor(MAX(1, mf))
 {
 	/*_move_step_y = (_end.y - _begin.y) / _move_factor;*/
 	_status = ExecutionPhase::Begin;
@@ -42,7 +42,7 @@ auto ElementFallCommand::Excecute() -> ExecutionPhase
 ElementMoveCommand::ElementMoveCommand(game::Element& ref, sf::Vector2f end, size_t mf)
 	:_element_ref(ref),
 	_end(end),
-	_move_factor(mf)
+	_move_factor(MAX(1, mf))
 {
 	_status = ExecutionPhase::Begin;
 }
@@ -78,13 +78,13 @@ auto ElementMoveCommand::Excecute() -> ExecutionPhase
 
 ShowElementCommand::ShowElementCommand(game::Element& ref, size_t mf)
 	:_element_ref(ref),
-	_move_factor(mf)
+	_move_factor(MAX(1, mf))
 {
 	_position = _element_ref.GetSprite().getTextureRect();
 	sf::IntRect copy = _position;
 
-	_height_step = MAX(1, copy.height / mf);
-	_width_step = MAX(1, copy.height / mf);
+	_height_step = MAX(1, copy.height / _move_factor);
+	_width_step = MAX(1, copy.height / _move_factor);
 
 	copy.width = 0;
 	copy.height = 0;
