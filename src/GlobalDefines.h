@@ -27,7 +27,7 @@ using IntMatrix = Matrix<int>;
 #define ABS(N) ((N<0)?(-N):(N))
 #endif // !ABS
 
-#define MOVE_FACTOR 20
-#define DELAY_TIME 10
+#define MOVE_FACTOR 25
+#define DELAY_TIME 12
 
 #endif // !_GLOBAL_DEFINES_H_
