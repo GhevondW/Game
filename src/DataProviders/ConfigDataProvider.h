@@ -13,7 +13,7 @@ namespace game {
 		virtual ~IObjectiveProvider() = default;
 
 		virtual const std::vector<Objective>& GetObjectives() const = 0;
-        virtual int GetMovesCount() const = 0;
+        virtual size_t GetMovesCount() const = 0;
 	};
 
 	struct IConfigDataProvider : public IObjectiveProvider
@@ -23,22 +23,22 @@ namespace game {
 
 		virtual LoadStatus Load(const std::string& path) = 0;
 
-		int GetRow() const { 
+		size_t GetRow() const { 
 			if (_config == nullptr) throw "invalid operation";
 			return _config->row;  
 		}
 
-		int GetColumn() const { 
+		size_t GetColumn() const {
 			if (_config == nullptr) throw "invalid operation";
 			return _config->column; 
 		}
 
-		int GetMovesCount() const { 
+		size_t GetMovesCount() const {
 			if (_config == nullptr) throw "invalid operation";
 			return _config->moves_count; 
 		}
 
-		int GetFigColorsCount() const { 
+		size_t GetFigColorsCount() const {
 			if (_config == nullptr) throw "invalid operation";
 			return _config->fig_colors_count; 
 		}

@@ -25,8 +25,8 @@ bool Board::Init()
 {
 	_Dealloc();
 
-	int rows = _config_dp->GetRow();
-	int cols = _config_dp->GetColumn();
+	size_t rows = _config_dp->GetRow();
+	size_t cols = _config_dp->GetColumn();
 	const std::string& config_string = _config_dp->GetBoard();
 
 	if (config_string.empty()) return false;
@@ -307,8 +307,8 @@ void Board::Draw(sf::RenderWindow& window)
 	//int top_x = _board_rect.left;
 	//int top_y = _board_rect.top;
 
-	int rows = _config_dp->GetRow();
-	int cols = _config_dp->GetColumn();
+	size_t rows = _config_dp->GetRow();
+	size_t cols = _config_dp->GetColumn();
 
 	for (size_t y = 0; y < rows; y++)
 	{
@@ -399,7 +399,7 @@ auto Board::_Move() -> void
 
 auto Board::_RemoveRow(size_t y) -> void
 {
-	int rows = _config_dp->GetRow();
+	size_t rows = _config_dp->GetRow();
 	if (y < rows) {
 		for (int x = 0; x < _config_dp->GetColumn(); x++)
 		{

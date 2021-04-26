@@ -9,6 +9,19 @@ namespace game{
 		sb.count = j.at("count");
 	}
 
+	static bool check_config(const Config& config)
+	{
+		auto res =  config.column >= 1 && config.column <= 10 && config.row >= 1 && config.row <= 10 &&
+			config.moves_count > 0 && config.objectives.size() >= 1
+			&& config.objectives.size() <= 3 && config.fig_colors_count > 0 && config.fig_colors_count <= 5;
+		for (auto v : config.objectives)
+		{
+			if (v.count == 0) {
+				return false;
+			}
+		}
+		return res;
+	}
 
 	LoadStatus JSONConfigDataProvider::Load(const std::string& path)
 	{
@@ -30,6 +43,9 @@ namespace game{
 			const json& sj = j.at("objectives");
 			_config->objectives.resize(sj.size());
 			std::copy(sj.begin(), sj.end(), _config->objectives.begin());
+			if (!check_config(*_config)) {
+				status = LoadStatus::Other;
+			}
 		}
 		else
 		{

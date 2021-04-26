@@ -27,23 +27,24 @@ void GameController::UpdateGameStatus(GameStatus status) {
 void GameController::StartGame() {
     UpdateGameStatus(GameStatus::Ok);
 
-    if (_config_dp == nullptr || _resource_dp == nullptr || _kernels == nullptr || _factory == nullptr || _score_manager == nullptr) 
-    {
-        UpdateGameStatus(GameStatus::Failed);
-    }
-    
     _app = new RenderWindow(VideoMode(750, 950), "Game", Style::Close);
     _app->setFramerateLimit(60);
 
-    _board = std::make_unique<Board>(_config_dp,
-        _factory,
-        _score_manager,
-        _kernels,
-        _app->getSize().x,
-        _app->getSize().y);
+    if (_config_dp && _resource_dp && _kernels && _factory && _score_manager) 
+    {
+        _board = std::make_unique<Board>(_config_dp,
+            _factory,
+            _score_manager,
+            _kernels,
+            _app->getSize().x,
+            _app->getSize().y);
 
-    if (!_board->Init())
+        if (!_board->Init())
+            UpdateGameStatus(GameStatus::Failed);
+    }
+    else {
         UpdateGameStatus(GameStatus::Failed);
+    }
 
     _Run();
 }
@@ -55,7 +56,9 @@ void GameController::_Run() {
 
         _Draw();
 
-        _board->Autoplay();
+        if (_board) {
+            _board->Autoplay();
+        }
 
         sf::Event event;
         while (_app->pollEvent(event)) {
