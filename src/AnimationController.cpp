@@ -16,6 +16,16 @@ auto AnimationController::AddGroup() -> void
 	++_groups;
 }
 
+auto AnimationController::CheckLastGroup() -> void
+{
+    if (Empty()) return;
+    auto end = std::end(_commands);
+    --end;
+    if (end->second.empty()) {
+        _commands.erase(end);
+    }
+}
+
 auto AnimationController::AddCommand(ICommand command) -> void
 {
 	if (_commands.empty()) AddGroup();
